@@ -7,4 +7,3 @@ RewriteCond %{REQUEST_FILENAME}.php -f
 RewriteRule ^(.*)$ $1.php
 RewriteCond %{SERVER_PORT} 80
 RewriteRule ^(.*)$ https://news.mhanam.com/$1 [R,L]
-AddHandler application/x-httpd-alt-php56___lsphp .php
