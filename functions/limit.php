@@ -26,6 +26,6 @@ function truncate($input, $maxWords, $maxChars)
         $truncated[] = $fragment;
     }
 
-    $result = implode($truncated, ' ');
+    $result = implode($truncated);
     return $result . ($input == $result ? '' : '...');
 } ?>
