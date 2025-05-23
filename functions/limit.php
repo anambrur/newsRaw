@@ -7,25 +7,24 @@ function limit_words($string, $word_limit)
 
 
   <?php
-function truncate($input, $maxWords, $maxChars)
-{
-    $words = preg_split('/\s+/', $input);
-    $words = array_slice($words, 0, $maxWords);
-    $words = array_reverse($words);
-
-    $chars = 0;
-    $truncated = array();
-
-    while (count($words) > 0)
+    function truncate($input, $maxWords, $maxChars)
     {
-        $fragment = trim(array_pop($words));
-        $chars += strlen($fragment);
+        $words = preg_split('/\s+/', $input);
+        $words = array_slice($words, 0, $maxWords);
+        $words = array_reverse($words);
 
-        if ($chars > $maxChars) break;
+        $chars = 0;
+        $truncated = array();
 
-        $truncated[] = $fragment;
-    }
+        while (count($words) > 0) {
+            $fragment = trim(array_pop($words));
+            $chars += strlen($fragment);
 
-    $result = implode($truncated);
-    return $result . ($input == $result ? '' : '...');
-} ?>
+            if ($chars > $maxChars) break;
+
+            $truncated[] = $fragment;
+        }
+
+        $result = implode(' ',$truncated);
+        return $result . ($input == $result ? '' : '...');
+    } ?>
