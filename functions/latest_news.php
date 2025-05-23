@@ -1,0 +1,12 @@
+<?php
+require_once ("includes/config.php");
+$query = mysqli_query($con, "select tblposts.id as pid,tblposts.PostTitle as posttitle, tblposts.Is_Active=1, tblposts.PostImage as postimage from tblposts left join tblcategory on tblcategory.id=tblposts.CategoryId left join  tblsubcategory on  tblsubcategory.SubCategoryId=tblposts.SubCategoryId WHERE tblposts.Is_Active = 1 ORDER BY tblposts.id DESC limit 15");
+while ($row = mysqli_fetch_array($query))
+{
+?> 
+<div class="DLatestNewsList">
+<a href="news-details?nid=<?php echo htmlentities($row['pid'])?>">
+<h3 class="Title"><?php echo truncate($row['posttitle'],8,120); ?></h3>
+</a>
+</div>
+<?php } ?>

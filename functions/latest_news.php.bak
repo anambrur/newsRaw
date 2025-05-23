@@ -1,0 +1,15 @@
+<?php
+require_once("includes/config.php");
+$query=mysqli_query($con,"select tblposts.id as pid,tblposts.PostTitle as posttitle, tblposts.PostImage as postimage from tblposts left join tblcategory on tblcategory.id=tblposts.CategoryId left join  tblsubcategory on  tblsubcategory.SubCategoryId=tblposts.SubCategoryId ORDER BY tblposts.id DESC limit 35");
+while ($row=mysqli_fetch_array($query)) {
+?>
+
+<div class="media">
+	
+	<div class="media-body  text-left box">
+		<h4 class="media-heading" style="font-size: 15px; padding-left:8px;"> <?php echo truncate($row['posttitle'],8,120); ?></h4>
+		<hr>
+	</div>
+
+</div>
+<?php } ?>
