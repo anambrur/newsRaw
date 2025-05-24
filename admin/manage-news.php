@@ -9,6 +9,8 @@ define('STATUS_DRAFT', 2);
 define('STATUS_SCHEDULED', 3);
 define('STATUS_DELETED', 4);
 
+
+
 if (strlen($_SESSION['login']) == 0) {
   header('location:index.php');
 } else {
@@ -20,7 +22,17 @@ if (strlen($_SESSION['login']) == 0) {
     } else {
       $error = "Something went wrong . Please try again.";
     }
+
+    // Handle status filter if set
+    $statusFilter = "";
+    if (isset($_GET['status']) && in_array($_GET['status'], [STATUS_ACTIVE, STATUS_DRAFT, STATUS_SCHEDULED, STATUS_DELETED])) {
+      $statusFilter = " AND tblposts.Is_Active = " . intval($_GET['status']);
+    }
+
+    // Number of posts per page
+    $postsPerPage = 10;
   }
+
 ?>
   <!DOCTYPE html>
   <html lang="en">
@@ -169,15 +181,16 @@ if (strlen($_SESSION['login']) == 0) {
                           }
                           $offset = $page * 20;
 
-                          $query = mysqli_query($con, "SELECT tblposts.id as postid, tblposts.PostTitle as title, tblposts.PostImage, tblposts.views, tblcategory.CategoryName as category, tblsubcategory.Subcategory as subcategory 
-                                                                              FROM tblposts 
-                                                                              LEFT JOIN tblcategory ON tblcategory.id=tblposts.CategoryId 
-                                                                              LEFT JOIN tblsubcategory ON tblsubcategory.SubCategoryId=tblposts.SubCategoryId 
-                                                                              WHERE tblposts.Is_Active=1 $searchCondition 
-                                                                              ORDER BY tblposts.id DESC 
-                                                                              LIMIT $offset,20");
-
-
+                          $query = mysqli_query($con, "SELECT tblposts.id as postid, tblposts.PostTitle as title, 
+                                                    tblposts.PostImage, tblposts.views, tblposts.Is_Active as status, 
+                                                    tblposts.ScheduledPublish, tblcategory.CategoryName as category, 
+                                                    tblsubcategory.Subcategory as subcategory 
+                                                    FROM tblposts 
+                                                    LEFT JOIN tblcategory ON tblcategory.id=tblposts.CategoryId 
+                                                    LEFT JOIN tblsubcategory ON tblsubcategory.SubCategoryId=tblposts.SubCategoryId 
+                                                    WHERE 1=1 $statusFilter $searchCondition 
+                                                    ORDER BY tblposts.id DESC 
+                                                    LIMIT $offset, $postsPerPage");
                           $rowcount = mysqli_num_rows($query);
                           if ($rowcount == 0) {
                           ?>
