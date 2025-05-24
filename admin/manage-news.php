@@ -285,6 +285,7 @@ if ($searchQuery != '') {
                           <option value="<?php echo STATUS_ACTIVE; ?>" <?php echo $row['status'] == STATUS_ACTIVE ? 'selected' : ''; ?>>Active</option>
                           <option value="<?php echo STATUS_DRAFT; ?>" <?php echo $row['status'] == STATUS_DRAFT ? 'selected' : ''; ?>>Draft</option>
                           <option value="<?php echo STATUS_SCHEDULED; ?>" <?php echo $row['status'] == STATUS_SCHEDULED ? 'selected' : ''; ?>>Scheduled</option>
+                          <option value="<?php echo STATUS_BIN; ?>" <?php echo $row['status'] == STATUS_BIN ? 'selected' : ''; ?>>Move To Bin</option>
                         </select>
                         <?php if ($row['status'] == STATUS_SCHEDULED && !empty($row['ScheduledPublish'])): ?>
                           <br><small>Scheduled for: <?php echo date('M j, Y H:i', strtotime($row['ScheduledPublish'])); ?></small>
