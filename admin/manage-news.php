@@ -280,7 +280,9 @@ if (isset($_GET['status']) && in_array($_GET['status'], [STATUS_ACTIVE, STATUS_D
                                     <option value="<?php echo STATUS_SCHEDULED; ?>" <?php echo $row['status'] == STATUS_SCHEDULED ? 'selected' : ''; ?>>Scheduled</option>
                                   </select>
                                 <?php endif; ?>
+
                                 <!-- <span class="status-badge <?php echo $statusClass; ?>"><?php echo $statusText; ?></span> -->
+
                                 <?php if ($row['status'] == STATUS_SCHEDULED && !empty($row['ScheduledPublish'])): ?>
                                   <br><small>Scheduled for: <?php echo date('M j, Y H:i', strtotime($row['ScheduledPublish'])); ?></small>
                                 <?php endif; ?>
