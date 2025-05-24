@@ -27,7 +27,10 @@ if (isset($_GET['pid'])) {
     } else {
         $_SESSION['error'] = "Something went wrong. Please try again.";
     }
+    
+    // Return to previous page with all parameters
+    $redirect_url = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : 'manage-news.php?status='.STATUS_DELETED;
+    header("Location: $redirect_url");
+    exit();
 }
-
-header("Location: manage-news.php?status=".STATUS_DELETED);
-exit();
+?>
