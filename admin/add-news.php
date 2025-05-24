@@ -160,12 +160,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                         (PostTitle, CategoryId, PostDetails, PostUrl, Is_Active, On_Slider, 
                          On_Sportlingt, On_Article, On_Gfeed, On_Save, PostImage, repoter, 
                          source, subtitle, photocap, seoshort, imageseo, seomkey, PostingDate, UpdationDate,ScheduledPublish) 
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
                     );
 
                     mysqli_stmt_bind_param(
                         $insertQuery,
-                        'sisssiiiiisissssssss',
+                        'sisssiiiiisisssssssss',
                         $posttitle,
                         $catid,
                         $postdetails,
@@ -202,6 +202,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                         }
                     } else {
                         $error = "Database error: " . mysqli_error($con);
+                        error_log("Database error: " . mysqli_error($con));
                     }
                 }
             }
