@@ -181,7 +181,7 @@ if (strlen($_SESSION['login']) == 0) {
                           }
                           $offset = $page * 20;
 
-                          $query = mysqli_query($con, "SELECT tblposts.id as postid, tblposts.PostTitle as title, tblposts.PostImage, tblposts.views, tblcategory.CategoryName as category, tblsubcategory.Subcategory as subcategory 
+                          $query = mysqli_query($con, "SELECT tblposts.id as postid, tblposts.PostTitle as title, tblposts.PostImage, tblposts.views,tblposts.Is_Active as status, tblcategory.CategoryName as category, tblsubcategory.Subcategory as subcategory 
                                                                               FROM tblposts 
                                                                               LEFT JOIN tblcategory ON tblcategory.id=tblposts.CategoryId 
                                                                               LEFT JOIN tblsubcategory ON tblsubcategory.SubCategoryId=tblposts.SubCategoryId 
