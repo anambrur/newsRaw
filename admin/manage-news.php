@@ -220,9 +220,9 @@ if (strlen($_SESSION['login']) == 0) {
                                 <?php endif; ?>
                               </td>
                               <td>
-                                <a href="../news-details?nid=<?php echo htmlentities($row['postid']); ?>" target="_blank"><button type="button" class="btn btn-info">View</button></a>&nbsp;
-                                <a href="edit-news.php?pid=<?php echo htmlentities($row['postid']); ?>"><button type="button" class="btn btn-primary">Edit</button></a>&nbsp;
-                                <a href="manage-posts.php?pid=<?php echo htmlentities($row['postid']); ?>&&action=del" onclick="return confirm('Your News Move In Recycle Bin')"> <button type="button" class="btn btn-danger">Move To Bin</button></a>
+                                <a href="../news-details?nid=<?php echo htmlentities($row['postid']); ?>" target="_blank"><button type="button" class="btn btn-sm btn-info">View</button></a>&nbsp;
+                                <a href="edit-news.php?pid=<?php echo htmlentities($row['postid']); ?>"><button type="button" class="btn btn-sm btn-primary">Edit</button></a>&nbsp;
+                                <a href="manage-posts.php?pid=<?php echo htmlentities($row['postid']); ?>&&action=del" onclick="return confirm('Your News Move In Recycle Bin')"> <button type="button" class="btn btn-sm btn-danger">Move To Bin</button></a>
                               </td>
                             </tr>
                         <?php }
@@ -312,6 +312,8 @@ if (strlen($_SESSION['login']) == 0) {
     <!-- App js -->
     <script src="assets/js/jquery.core.js"></script>
     <script src="assets/js/jquery.app.js"></script>
+    <!-- SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
       jQuery(document).ready(function() {
@@ -327,6 +329,70 @@ if (strlen($_SESSION['login']) == 0) {
 
         $(".select2-limiting").select2({
           maximumSelectionLength: 2
+        });
+
+
+        function showAlert(icon, title) {
+          const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            didOpen: (toast) => {
+              toast.addEventListener('mouseenter', Swal.stopTimer)
+              toast.addEventListener('mouseleave', Swal.resumeTimer)
+            }
+          });
+
+          Toast.fire({
+            icon: icon,
+            title: title
+          });
+        }
+
+        $('.post-status').focus(function() {
+          $(this).data('previous', $(this).val());
+        });
+
+        $('.post-status').change(function() {
+          var postId = $(this).data('post-id');
+          var newStatus = $(this).val();
+          var selectElement = $(this);
+
+          console.log('New status:', postId, newStatus);
+
+          // Get old status from data
+          var oldStatus = selectElement.data('previous');
+
+          selectElement.prop('disabled', true);
+
+          $.ajax({
+            url: 'update-post-status.php',
+            type: 'POST',
+            data: {
+              post_id: postId,
+              new_status: newStatus
+            },
+            dataType: 'json', // <— this ensures response is parsed correctly
+            success: function(response) {
+              selectElement.prop('disabled', false);
+
+              if (response.success === true) {
+                showAlert('success', 'Status updated successfully!');
+              } else {
+                // Revert to old status
+                selectElement.val(oldStatus);
+                showAlert('error', response.message);
+              }
+            },
+            error: function(xhr, status, error) {
+              selectElement.prop('disabled', false);
+              selectElement.val(oldStatus);
+              showAlert('error', 'Error updating status. Please try again.');
+              console.error('AJAX Error:', error);
+            }
+          });
         });
       });
     </script>
