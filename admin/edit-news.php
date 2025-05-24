@@ -145,7 +145,7 @@ if (strlen($_SESSION['login']) == 0) {
         <link href="../plugins/summernote/summernote.css" rel="stylesheet" />
         <link href="../plugins/jquery.filer/css/jquery.filer.css" rel="stylesheet" />
         <link href="../plugins/jquery.filer/css/themes/jquery.filer-dragdropbox-theme.css" rel="stylesheet" />
-        <link href="../plugins/select2/css/select2.min.css" rel="stylesheet" type="text/css" 
+        <link href="../plugins/select2/css/select2.min.css" rel="stylesheet" type="text/css"
             <!-- App css -->
         <link href="assets/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
         <link rel="stylesheet" href="../plugins/switchery/switchery.min.css">
