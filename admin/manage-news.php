@@ -319,7 +319,7 @@ $postsPerPage = 10;
                                     <option value="<?php echo STATUS_SCHEDULED; ?>" <?php echo $row['status'] == STATUS_SCHEDULED ? 'selected' : ''; ?>>Scheduled</option>
                                   </select>
                                 <?php endif; ?>
-                                <span class="status-badge>"></span>
+                                <span class="status-badge <?php echo $statusClass; ?>"></span>
                                 <?php if ($row['status'] == STATUS_SCHEDULED && !empty($row['ScheduledPublish'])): ?>
                                   <br><small>Scheduled for: <?php echo date('M j, Y H:i', strtotime($row['ScheduledPublish'])); ?></small>
                                 <?php endif; ?>
