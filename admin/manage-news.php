@@ -425,7 +425,7 @@ $postsPerPage = 10;
             selectElement.prop('disabled', false);
             console.log(response);
 
-            if (response.success) {
+            if (response.success === true) {
               console.log('Status updated successfully!');
               showAlert('success', 'Status updated successfully!');
             } else {
