@@ -16,8 +16,10 @@ try {
         AND ScheduledPublish <= '$currentDateTime' 
         AND Is_Active = 0"
     );
-    
+
+    echo '<pre>';  // Added pre tag here
     print_r($query);
+    echo '</pre>'; // Closing pre tag
 
     if (!$query) {
         throw new Exception("Failed to fetch scheduled posts");
