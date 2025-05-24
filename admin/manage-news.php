@@ -17,26 +17,33 @@ if (strlen($_SESSION['login']) == 0) {
 // Function to build query string while preserving existing parameters
 function getQueryString($exclude = [])
 {
-    $params = [];
-    foreach ($_GET as $key => $value) {
-        if (!in_array($key, $exclude)) {
-            $params[$key] = $value;
-        }
+  $params = [];
+  foreach ($_GET as $key => $value) {
+    if (!in_array($key, $exclude)) {
+      $params[$key] = $value;
     }
-    return $params ? '?' . http_build_query($params) : '';
+  }
+  return $params ? '?' . http_build_query($params) : '';
 }
 
 // Handle delete action
 if (isset($_GET['action']) && $_GET['action'] == 'del') {
-    $postid = intval($_GET['pid']);
-    $query = mysqli_query($con, "UPDATE tblposts SET Is_Active=" . STATUS_BIN . " WHERE id='$postid'");
-    if ($query) {
-        $_SESSION['msg'] = "Post moved to trash";
-    } else {
-        $_SESSION['error'] = "Something went wrong. Please try again.";
-    }
-    header("Location: manage-posts.php" . getQueryString(['pid', 'action']));
-    exit();
+  $postid = intval($_GET['pid']);
+  
+  error_reporting(E_ALL);
+  ini_set('display_errors', 1);
+
+  error_log("Attempting to move post ID $postid to bin");
+  $query = mysqli_query($con, "UPDATE tblposts SET Is_Active=" . STATUS_BIN . " WHERE id='$postid'");
+  error_log("Query result: " . ($query ? "success" : "failed - " . mysqli_error($con)));
+
+  if ($query) {
+    $_SESSION['msg'] = "Post moved to trash";
+  } else {
+    $_SESSION['error'] = "Something went wrong. Please try again.";
+  }
+  header("Location: manage-posts.php" . getQueryString(['pid', 'action']));
+  exit();
 }
 
 // Handle status filter if set
@@ -290,7 +297,7 @@ if ($searchQuery != '') {
                         <?php else: ?>
                           <span>Deleted</span>
                         <?php endif; ?>
-                        
+
                         <?php if ($row['status'] == STATUS_SCHEDULED && !empty($row['ScheduledPublish'])): ?>
                           <br><small>Scheduled for: <?php echo date('M j, Y H:i', strtotime($row['ScheduledPublish'])); ?></small>
                         <?php endif; ?>
