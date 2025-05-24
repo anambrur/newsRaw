@@ -18,7 +18,7 @@ try {
     );
 
     echo '<pre>';
-    print_r($query->fetch_all(MYSQLI_ASSOC));   
+    print_r($query);   
     echo '</pre>';
 
     if (!$query) {
