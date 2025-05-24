@@ -91,7 +91,7 @@ function handleFileUpload($fileInput, $uploadDir, $allowedExtensions)
 }
 
 // Process form submission
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($_POST['draft']))) {
     // Validate CSRF token
     if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
         $error = "Security error: Invalid CSRF token.";
@@ -119,15 +119,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
         $On_Gfeed = isset($_POST['googlefeed']) && $_POST['googlefeed'] === 'value1' ? 1 : 0;
         $On_Save = isset($_POST['saveme']) && $_POST['saveme'] === 'value1' ? 1 : 0;
 
-
         // Get scheduled publish time
         $scheduledPublish = null;
         if (!empty($_POST['scheduled_publish'])) {
             $scheduledPublish = date('Y-m-d H:i:s', strtotime($_POST['scheduled_publish']));
         }
 
-        // Set Is_Active based on scheduling
-        $status = (empty($scheduledPublish) || strtotime($scheduledPublish) <= time()) ? 1 : 3;
+        // Set Is_Active based on submission type and scheduling
+        if (isset($_POST['draft'])) {
+            $status = 2; // Draft status
+        } elseif (!empty($scheduledPublish)) {
+            $status = (strtotime($scheduledPublish) <= time()) ? 1 : 3;
+        } else {
+            $status = 1; // Default to published
+        }
 
         // Validate required fields
         if (empty($posttitle) || empty($catid) || empty($postdetails) || empty($reporter)) {
@@ -156,10 +161,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                     $insertQuery = mysqli_prepare(
                         $con,
                         "INSERT INTO tblposts 
-                (PostTitle, CategoryId, PostDetails, PostUrl, Is_Active, On_Slider, 
-                 On_Sportlingt, On_Article, On_Gfeed, On_Save, PostImage, repoter, 
-                 source, subtitle, photocap, seoshort, imageseo, seomkey, PostingDate, UpdationDate, ScheduledPublish) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                        (PostTitle, CategoryId, PostDetails, PostUrl, Is_Active, On_Slider, 
+                         On_Sportlingt, On_Article, On_Gfeed, On_Save, PostImage, repoter, 
+                         source, subtitle, photocap, seoshort, imageseo, seomkey, PostingDate, UpdationDate, ScheduledPublish) 
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
                     );
 
                     mysqli_stmt_bind_param(
@@ -169,7 +174,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                         $catid,
                         $postdetails,
                         $url,
-                        $status,  // This now properly reflects the scheduled status
+                        $status,
                         $On_Slider,
                         $On_Sportlingt,
                         $On_Article,
@@ -189,7 +194,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                     );
 
                     if (mysqli_stmt_execute($insertQuery)) {
-                        $msg = "Post successfully " . ($status ? "published" : "scheduled");
+                        $msg = "Post successfully " . ($status == 1 ? "published" : ($status == 2 ? "saved as draft" : "scheduled"));
 
                         // Create thumbnail
                         try {
@@ -457,7 +462,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                                     </select>
                                 </div>
 
-
                                 <div class="form-group m-b-20">
                                     <label>Schedule Post</label>
                                     <p>(Leave empty for immediate publishing)</p>
@@ -488,7 +492,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                                 </div>
 
                                 <button type="submit" name="submit" class="btn btn-success waves-effect waves-light">Publish Post</button>
-                                <button type="reset" class="btn btn-danger waves-effect waves-light">Reset Form</button>
+                                <button type="submit" name="draft" class="btn btn-primary waves-effect waves-light">Save as Draft</button>
                                 </form>
                             </div>
                         </div>
