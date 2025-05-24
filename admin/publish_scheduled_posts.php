@@ -11,6 +11,8 @@ $query = mysqli_query(
     AND Is_Active = 0"
 );
 
+
+print_r($query);
 while ($post = mysqli_fetch_assoc($query)) {
     // Update post to published status
     mysqli_query(
