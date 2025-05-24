@@ -185,7 +185,7 @@ if (strlen($_SESSION['login']) == 0) {
                                                                               FROM tblposts 
                                                                               LEFT JOIN tblcategory ON tblcategory.id=tblposts.CategoryId 
                                                                               LEFT JOIN tblsubcategory ON tblsubcategory.SubCategoryId=tblposts.SubCategoryId 
-                                                                              WHERE tblposts.Is_Active=1 $searchCondition 
+                                                                              $searchCondition 
                                                                               ORDER BY tblposts.id DESC 
                                                                               LIMIT $offset,20");
 
