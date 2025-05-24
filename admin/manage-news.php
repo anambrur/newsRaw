@@ -28,20 +28,20 @@ function getQueryString($exclude = [])
 }
 
 // Handle delete action first
-if(isset($_GET['action']) && $_GET['action'] == 'del') {
-    $postid = intval($_GET['pid']);
-    $query = mysqli_query($con,"UPDATE tblposts SET Is_Active=".STATUS_BIN." WHERE id='$postid'");
-    
-    if($query) {
-        $_SESSION['msg'] = "Post moved to trash";
-    } else {
-        $_SESSION['error'] = "Something went wrong. Please try again.";
-    }
-    
-    // Clear buffer before redirect
-    ob_end_clean();
-    header("Location: manage-news.php".getQueryString(['pid','action']));
-    exit();
+if (isset($_GET['action']) && $_GET['action'] == 'del') {
+  $postid = intval($_GET['pid']);
+  $query = mysqli_query($con, "UPDATE tblposts SET Is_Active=" . STATUS_BIN . " WHERE id='$postid'");
+
+  if ($query) {
+    $_SESSION['msg'] = "Post moved to trash";
+  } else {
+    $_SESSION['error'] = "Something went wrong. Please try again.";
+  }
+
+  // Clear buffer before redirect
+  ob_end_clean();
+  header("Location: manage-news.php" . getQueryString(['pid', 'action']));
+  exit();
 }
 
 // Handle status filter if set
