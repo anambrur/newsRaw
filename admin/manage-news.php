@@ -46,7 +46,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'del') {
 
 // Handle status filter if set
 $statusFilter = "";
-if (isset($_GET['status']) && in_array($_GET['status'], [STATUS_ACTIVE, STATUS_DRAFT, STATUS_SCHEDULED, STATUS_BIN])) {
+if (isset($_GET['status']) && in_array($_GET['status'], [STATUS_ACTIVE, STATUS_DRAFT, STATUS_SCHEDULED])) {
   $statusFilter = " AND tblposts.Is_Active = " . intval($_GET['status']);
 }
 
