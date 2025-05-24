@@ -23,20 +23,8 @@ if (isset($_GET['action']) && $_GET['action'] == 'del') {
   } else {
     $_SESSION['error'] = "Something went wrong. Please try again.";
   }
-  header("Location: manage-posts.php" . getQueryString(['pid', 'action']));
+  header("Location: manage-posts.php");
   exit();
-}
-
-// Function to build query string while preserving existing parameters
-function getQueryString($exclude = [])
-{
-  $params = [];
-  foreach ($_GET as $key => $value) {
-    if (!in_array($key, $exclude)) {
-      $params[$key] = $value;
-    }
-  }
-  return $params ? '?' . http_build_query($params) : '';
 }
 
 // Handle status filter if set
@@ -52,56 +40,32 @@ $postsPerPage = 10;
 $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
 $offset = ($page - 1) * $postsPerPage;
 
-// Search query - use prepared statements for security
-$searchQuery = isset($_GET['search']) ? trim($_GET['search']) : '';
+// Search query
+$searchQuery = isset($_GET['search']) ? mysqli_real_escape_string($con, $_GET['search']) : '';
 $searchCondition = "";
 if ($searchQuery != '') {
-  $searchCondition = " AND (tblposts.PostTitle LIKE ? OR tblcategory.CategoryName LIKE ?)";
+  $searchCondition = " AND (tblposts.PostTitle LIKE '%$searchQuery%' OR tblcategory.CategoryName LIKE '%$searchQuery%')";
 }
 
 // Get total number of posts for pagination
-$totalQueryStr = "SELECT COUNT(*) as total FROM tblposts 
-                 LEFT JOIN tblcategory ON tblcategory.id=tblposts.CategoryId 
-                 LEFT JOIN tblsubcategory ON tblsubcategory.SubCategoryId=tblposts.SubCategoryId 
-                 WHERE 1=1 $statusFilter";
-
-if ($searchQuery != '') {
-  $totalQueryStr .= $searchCondition;
-  $stmt = mysqli_prepare($con, $totalQueryStr);
-  $searchParam = "%$searchQuery%";
-  mysqli_stmt_bind_param($stmt, "ss", $searchParam, $searchParam);
-  mysqli_stmt_execute($stmt);
-  $totalResult = mysqli_stmt_get_result($stmt);
-  $totalRow = mysqli_fetch_assoc($totalResult);
-} else {
-  $totalResult = mysqli_query($con, $totalQueryStr);
-  $totalRow = mysqli_fetch_assoc($totalResult);
-}
-
+$totalQuery = mysqli_query($con, "SELECT COUNT(*) as total FROM tblposts 
+                                 LEFT JOIN tblcategory ON tblcategory.id=tblposts.CategoryId 
+                                 LEFT JOIN tblsubcategory ON tblsubcategory.SubCategoryId=tblposts.SubCategoryId 
+                                 WHERE 1=1 $statusFilter $searchCondition");
+$totalRow = mysqli_fetch_assoc($totalQuery);
 $totalPosts = $totalRow['total'];
 $totalPages = ceil($totalPosts / $postsPerPage);
 
 // Get posts for current page
-$queryStr = "SELECT tblposts.id as postid, tblposts.PostTitle as title, tblposts.PostImage, 
-            tblposts.views, tblposts.Is_Active as status, tblposts.ScheduledPublish,
-            tblcategory.CategoryName as category, tblsubcategory.Subcategory as subcategory 
-            FROM tblposts 
-            LEFT JOIN tblcategory ON tblcategory.id=tblposts.CategoryId 
-            LEFT JOIN tblsubcategory ON tblsubcategory.SubCategoryId=tblposts.SubCategoryId 
-            WHERE 1=1 $statusFilter";
-
-if ($searchQuery != '') {
-  $queryStr .= $searchCondition;
-  $queryStr .= " ORDER BY tblposts.id DESC LIMIT ?, ?";
-  $stmt = mysqli_prepare($con, $queryStr);
-  $searchParam = "%$searchQuery%";
-  mysqli_stmt_bind_param($stmt, "ssii", $searchParam, $searchParam, $offset, $postsPerPage);
-  mysqli_stmt_execute($stmt);
-  $query = mysqli_stmt_get_result($stmt);
-} else {
-  $queryStr .= " ORDER BY tblposts.id DESC LIMIT $offset, $postsPerPage";
-  $query = mysqli_query($con, $queryStr);
-}
+$query = mysqli_query($con, "SELECT tblposts.id as postid, tblposts.PostTitle as title, tblposts.PostImage, 
+                            tblposts.views, tblposts.Is_Active as status, tblposts.ScheduledPublish,
+                            tblcategory.CategoryName as category, tblsubcategory.Subcategory as subcategory 
+                            FROM tblposts 
+                            LEFT JOIN tblcategory ON tblcategory.id=tblposts.CategoryId 
+                            LEFT JOIN tblsubcategory ON tblsubcategory.SubCategoryId=tblposts.SubCategoryId 
+                            WHERE 1=1 $statusFilter $searchCondition
+                            ORDER BY tblposts.id DESC 
+                            LIMIT $offset, $postsPerPage");
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -311,27 +275,13 @@ if ($searchQuery != '') {
               </table>
 
               <!-- Pagination -->
-              <!-- Pagination -->
               <div class="row mt-3">
                 <div class="col-md-12">
                   <nav aria-label="Page navigation">
                     <ul class="pagination justify-content-center">
-                      <?php
-                      // Build query parameters for pagination links
-                      $queryParams = [];
-                      if (isset($_GET['status']) && $_GET['status'] != '') {
-                        $queryParams['status'] = $_GET['status'];
-                      }
-                      if (isset($_GET['search']) && $_GET['search'] != '') {
-                        $queryParams['search'] = $_GET['search'];
-                      }
-
-                      if ($page > 1):
-                        $queryParams['page'] = $page - 1;
-                        $prevLink = 'manage-posts.php?' . http_build_query($queryParams);
-                      ?>
+                      <?php if ($page > 1): ?>
                         <li class="page-item">
-                          <a class="page-link" href="<?php echo $prevLink; ?>" aria-label="Previous">
+                          <a class="page-link" href="manage-posts.php?page=<?php echo $page - 1; ?><?php echo isset($_GET['status']) ? '&status=' . $_GET['status'] : ''; ?><?php echo isset($_GET['search']) ? '&search=' . $_GET['search'] : ''; ?>" aria-label="Previous">
                             <span aria-hidden="true">&laquo;</span>
                           </a>
                         </li>
@@ -346,21 +296,15 @@ if ($searchQuery != '') {
                       $startPage = max(1, $page - 2);
                       $endPage = min($totalPages, $page + 2);
 
-                      for ($i = $startPage; $i <= $endPage; $i++):
-                        $queryParams['page'] = $i;
-                        $pageLink = 'manage-posts.php?' . http_build_query($queryParams);
-                      ?>
+                      for ($i = $startPage; $i <= $endPage; $i++): ?>
                         <li class="page-item <?php echo $i == $page ? 'active' : ''; ?>">
-                          <a class="page-link" href="<?php echo $pageLink; ?>"><?php echo $i; ?></a>
+                          <a class="page-link" href="manage-posts.php?page=<?php echo $i; ?><?php echo isset($_GET['status']) ? '&status=' . $_GET['status'] : ''; ?><?php echo isset($_GET['search']) ? '&search=' . $_GET['search'] : ''; ?>"><?php echo $i; ?></a>
                         </li>
                       <?php endfor; ?>
 
-                      <?php if ($page < $totalPages):
-                        $queryParams['page'] = $page + 1;
-                        $nextLink = 'manage-posts.php?' . http_build_query($queryParams);
-                      ?>
+                      <?php if ($page < $totalPages): ?>
                         <li class="page-item">
-                          <a class="page-link" href="<?php echo $nextLink; ?>" aria-label="Next">
+                          <a class="page-link" href="manage-posts.php?page=<?php echo $page + 1; ?><?php echo isset($_GET['status']) ? '&status=' . $_GET['status'] : ''; ?><?php echo isset($_GET['search']) ? '&search=' . $_GET['search'] : ''; ?>" aria-label="Next">
                             <span aria-hidden="true">&raquo;</span>
                           </a>
                         </li>
