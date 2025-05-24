@@ -391,11 +391,9 @@ if (isset($_GET['status']) && in_array($_GET['status'], [STATUS_ACTIVE, STATUS_D
         var postId = $(this).data('post-id');
         var newStatus = $(this).val();
         var row = $('#post-row-' + postId);
-        var badge = row.find('.status-badge');
+        var selectElement = $(this); // Store reference to the select element
 
-        // Store old values in case we need to revert
-        var oldStatus = badge.text();
-        var oldClass = badge.attr('class').replace('status-badge ', '');
+        console.log('Changing status for post ID:', postId, 'to:', newStatus);
 
         $.ajax({
           url: 'update-post-status.php',
@@ -405,33 +403,13 @@ if (isset($_GET['status']) && in_array($_GET['status'], [STATUS_ACTIVE, STATUS_D
             new_status: newStatus
           },
           beforeSend: function() {
-            badge.text('Updating...').removeClass('status-active status-draft status-scheduled');
+            // Show loading state if needed
+            selectElement.prop('disabled', true);
           },
           success: function(response) {
+            selectElement.prop('disabled', false);
+
             if (response.success) {
-              // Update status badge
-              var statusText = '';
-              var statusClass = '';
-
-              switch (parseInt(newStatus)) {
-                case <?php echo STATUS_ACTIVE; ?>:
-                  statusText = 'Active';
-                  statusClass = 'status-active';
-                  break;
-                case <?php echo STATUS_DRAFT; ?>:
-                  statusText = 'Draft';
-                  statusClass = 'status-draft';
-                  break;
-                case <?php echo STATUS_SCHEDULED; ?>:
-                  statusText = 'Scheduled';
-                  statusClass = 'status-scheduled';
-                  break;
-              }
-
-              badge.text(statusText)
-                .removeClass('status-active status-draft status-scheduled')
-                .addClass(statusClass);
-
               // Show success message
               $('<div class="alert alert-success">Status updated successfully!</div>')
                 .insertBefore('.table-responsive')
@@ -440,9 +418,8 @@ if (isset($_GET['status']) && in_array($_GET['status'], [STATUS_ACTIVE, STATUS_D
                   $(this).remove();
                 });
             } else {
-              // Revert selection and show error
-              $(this).val(response.old_status);
-              badge.text(oldStatus).removeClass('status-active status-draft status-scheduled').addClass(oldClass);
+              // Revert selection if update failed
+              selectElement.val(response.old_status);
 
               $('<div class="alert alert-danger">Error: ' + response.message + '</div>')
                 .insertBefore('.table-responsive')
@@ -453,16 +430,17 @@ if (isset($_GET['status']) && in_array($_GET['status'], [STATUS_ACTIVE, STATUS_D
             }
           },
           error: function(xhr, status, error) {
-            // Revert selection
-            $(this).val(response.old_status);
-            badge.text(oldStatus).removeClass('status-active status-draft status-scheduled').addClass(oldClass);
+            selectElement.prop('disabled', false);
 
+            // Show error message
             $('<div class="alert alert-danger">Error updating status. Please try again.</div>')
               .insertBefore('.table-responsive')
               .delay(3000)
               .fadeOut(function() {
                 $(this).remove();
               });
+
+            console.error('AJAX Error:', error);
           }
         });
       });
