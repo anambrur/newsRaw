@@ -1,11 +1,10 @@
 <?php
-include('../includes/config.php');
 
 try {
-
-    // if (!$con) {
-    //     throw new Exception("Database connection failed");
-    // }
+    include('includes/config.php');
+    if (!$con) {
+        throw new Exception("Database connection failed");
+    }
     // Get current datetime
     $currentDateTime = date('Y-m-d H:i:s');
 
