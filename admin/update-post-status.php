@@ -6,7 +6,7 @@ include('includes/config.php');
 define('STATUS_ACTIVE', 1);
 define('STATUS_DRAFT', 2);
 define('STATUS_SCHEDULED', 3);
-define('STATUS_DELETED', 4);
+define('STATUS_BIN', 4);
 
 header('Content-Type: application/json');
 

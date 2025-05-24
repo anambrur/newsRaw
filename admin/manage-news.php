@@ -7,7 +7,7 @@ error_reporting(0);
 define('STATUS_ACTIVE', 1);
 define('STATUS_DRAFT', 2);
 define('STATUS_SCHEDULED', 3);
-define('STATUS_DELETED', 4);
+define('STATUS_BIN', 4);
 
 if (strlen($_SESSION['login']) == 0) {
   header('location:index.php');
@@ -17,7 +17,7 @@ if (strlen($_SESSION['login']) == 0) {
 // Handle delete action
 if (isset($_GET['action']) && $_GET['action'] == 'del') {
   $postid = intval($_GET['pid']);
-  $query = mysqli_query($con, "UPDATE tblposts SET Is_Active=" . STATUS_DELETED . " WHERE id='$postid'");
+  $query = mysqli_query($con, "UPDATE tblposts SET Is_Active=" . STATUS_BIN . " WHERE id='$postid'");
   if ($query) {
     $_SESSION['msg'] = "Post moved to trash";
   } else {
@@ -41,7 +41,7 @@ function getQueryString($exclude = [])
 
 // Handle status filter if set
 $statusFilter = "";
-if (isset($_GET['status']) && in_array($_GET['status'], [STATUS_ACTIVE, STATUS_DRAFT, STATUS_SCHEDULED, STATUS_DELETED])) {
+if (isset($_GET['status']) && in_array($_GET['status'], [STATUS_ACTIVE, STATUS_DRAFT, STATUS_SCHEDULED, STATUS_BIN])) {
   $statusFilter = " AND tblposts.Is_Active = " . intval($_GET['status']);
 }
 
@@ -225,7 +225,7 @@ if ($searchQuery != '') {
                       <option value="<?php echo STATUS_ACTIVE; ?>" <?php echo (isset($_GET['status']) && $_GET['status'] == STATUS_ACTIVE) ? 'selected' : ''; ?>>Active</option>
                       <option value="<?php echo STATUS_DRAFT; ?>" <?php echo (isset($_GET['status']) && $_GET['status'] == STATUS_DRAFT) ? 'selected' : ''; ?>>Draft</option>
                       <option value="<?php echo STATUS_SCHEDULED; ?>" <?php echo (isset($_GET['status']) && $_GET['status'] == STATUS_SCHEDULED) ? 'selected' : ''; ?>>Scheduled</option>
-                      <option value="<?php echo STATUS_DELETED; ?>" <?php echo (isset($_GET['status']) && $_GET['status'] == STATUS_DELETED) ? 'selected' : ''; ?>>Deleted</option>
+                      <option value="<?php echo STATUS_BIN; ?>" <?php echo (isset($_GET['status']) && $_GET['status'] == STATUS_BIN) ? 'selected' : ''; ?>>Deleted</option>
                     </select>
                   </div>
 
@@ -281,15 +281,11 @@ if ($searchQuery != '') {
                       <?php } ?>
 
                       <td>
-                        <?php if ($row['status'] != STATUS_DELETED): ?>
-                          <select class="post-status" data-post-id="<?php echo $row['postid']; ?>">
-                            <option value="<?php echo STATUS_ACTIVE; ?>" <?php echo $row['status'] == STATUS_ACTIVE ? 'selected' : ''; ?>>Active</option>
-                            <option value="<?php echo STATUS_DRAFT; ?>" <?php echo $row['status'] == STATUS_DRAFT ? 'selected' : ''; ?>>Draft</option>
-                            <option value="<?php echo STATUS_SCHEDULED; ?>" <?php echo $row['status'] == STATUS_SCHEDULED ? 'selected' : ''; ?>>Scheduled</option>
-                          </select>
-                        <?php else: ?>
-                          <span>Deleted</span>
-                        <?php endif; ?>
+                        <select class="post-status" data-post-id="<?php echo $row['postid']; ?>">
+                          <option value="<?php echo STATUS_ACTIVE; ?>" <?php echo $row['status'] == STATUS_ACTIVE ? 'selected' : ''; ?>>Active</option>
+                          <option value="<?php echo STATUS_DRAFT; ?>" <?php echo $row['status'] == STATUS_DRAFT ? 'selected' : ''; ?>>Draft</option>
+                          <option value="<?php echo STATUS_SCHEDULED; ?>" <?php echo $row['status'] == STATUS_SCHEDULED ? 'selected' : ''; ?>>Scheduled</option>
+                        </select>
                         <?php if ($row['status'] == STATUS_SCHEDULED && !empty($row['ScheduledPublish'])): ?>
                           <br><small>Scheduled for: <?php echo date('M j, Y H:i', strtotime($row['ScheduledPublish'])); ?></small>
                         <?php endif; ?>
@@ -297,7 +293,7 @@ if ($searchQuery != '') {
                       <td>
                         <a href="../news-details?nid=<?php echo htmlentities($row['postid']); ?>" target="_blank" class="btn btn-sm btn-info">View</a>
                         <a href="edit-news.php?pid=<?php echo htmlentities($row['postid']); ?>" class="btn btn-sm btn-primary">Edit</a>
-                        <?php if ($row['status'] != STATUS_DELETED): ?>
+                        <?php if ($row['status'] != STATUS_BIN): ?>
                           <a href="manage-posts.php?pid=<?php echo htmlentities($row['postid']); ?>&action=del" onclick="return confirm('Your News will be moved to trash')" class="btn btn-sm btn-danger">Move To Bin</a>
                         <?php else: ?>
                           <a href="restore-post.php?pid=<?php echo htmlentities($row['postid']); ?>" class="btn btn-sm btn-success">Restore</a>

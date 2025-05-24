@@ -5,7 +5,7 @@ include('includes/config.php');
 define('STATUS_ACTIVE', 1);
 define('STATUS_DRAFT', 2);
 define('STATUS_SCHEDULED', 3);
-define('STATUS_DELETED', 4);
+define('STATUS_BIN', 4);
 
 if (strlen($_SESSION['login']) == 0) {
     header('location:index.php');
@@ -23,7 +23,7 @@ if (isset($_GET['pid'])) {
     }
     
     // Return to previous page with all parameters
-    $redirect_url = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : 'manage-news.php?status='.STATUS_DELETED;
+    $redirect_url = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : 'manage-news.php?status='.STATUS_BIN;
     header("Location: $redirect_url");
     exit();
 }
