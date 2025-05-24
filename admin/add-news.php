@@ -7,7 +7,7 @@ include('includes/resizeLib.php');
 error_reporting(E_ALL);
 ini_set('display_errors', 0);
 ini_set('log_errors', 1);
-ini_set('error_log', __DIR__.'/php_errors.log');
+ini_set('error_log', __DIR__ . '/php_errors.log');
 
 // CSRF token generation
 if (empty($_SESSION['csrf_token'])) {
@@ -27,27 +27,28 @@ $seoshort = $imageseo = $seomkey = $imgnewfile = '';
 $On_Slider = $On_Sportlingt = $On_Article = $On_Gfeed = $On_Save = 0;
 
 // Function to safely handle file uploads
-function handleFileUpload($fileInput, $uploadDir, $allowedExtensions) {
+function handleFileUpload($fileInput, $uploadDir, $allowedExtensions)
+{
     $errors = [];
     $file = $_FILES[$fileInput];
-    
+
     // Check for upload errors
     if ($file['error'] !== UPLOAD_ERR_OK) {
         $errors[] = "File upload error: " . $file['error'];
         return [false, implode(', ', $errors)];
     }
-    
+
     // Get file info
     $fileName = $file['name'];
     $fileTmp = $file['tmp_name'];
     $fileSize = $file['size'];
     $fileExt = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-    
+
     // Validate extension
     if (!in_array($fileExt, $allowedExtensions)) {
         $errors[] = "Invalid file format. Only " . implode(', ', $allowedExtensions) . " allowed.";
     }
-    
+
     // Validate MIME type
     $finfo = finfo_open(FILEINFO_MIME_TYPE);
     $mime = finfo_file($finfo, $fileTmp);
@@ -58,34 +59,34 @@ function handleFileUpload($fileInput, $uploadDir, $allowedExtensions) {
         'gif' => 'image/gif',
         'webp' => 'image/webp'
     ];
-    
+
     if (!in_array($mime, $allowedMimes)) {
         $errors[] = "Invalid file content. File doesn't match its extension.";
     }
-    
+
     // Validate file size (e.g., 5MB max)
     if ($fileSize > 5242880) {
         $errors[] = "File size exceeds 5MB limit.";
     }
-    
+
     // Check upload directory
     if (!is_dir($uploadDir) || !is_writable($uploadDir)) {
         $errors[] = "Upload directory doesn't exist or isn't writable.";
     }
-    
+
     if (!empty($errors)) {
         return [false, implode(', ', $errors)];
     }
-    
+
     // Generate unique filename
     $newFileName = "news_image_" . md5($fileName . microtime()) . '.' . $fileExt;
     $destination = rtrim($uploadDir, '/') . '/' . $newFileName;
-    
+
     // Move the file
     if (!move_uploaded_file($fileTmp, $destination)) {
         return [false, "Failed to move uploaded file."];
     }
-    
+
     return [true, $newFileName];
 }
 
@@ -106,18 +107,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
         $seoshort = trim($_POST['seoshort']);
         $imageseo = trim($_POST['imageseo']);
         $seomkey = trim($_POST['seomkey']);
-        
+
         // Generate URL slug
         $arr = explode(" ", $posttitle);
         $url = implode("-", $arr);
-        
+
         // Checkboxes
         $On_Slider = isset($_POST['test']) && $_POST['test'] === 'value1' ? 1 : 0;
         $On_Sportlingt = isset($_POST['sport']) && $_POST['sport'] === 'value1' ? 1 : 0;
         $On_Article = isset($_POST['article']) && $_POST['article'] === 'value1' ? 1 : 0;
         $On_Gfeed = isset($_POST['googlefeed']) && $_POST['googlefeed'] === 'value1' ? 1 : 0;
         $On_Save = isset($_POST['saveme']) && $_POST['saveme'] === 'value1' ? 1 : 0;
-        
+
+
+        // Get scheduled publish time
+        $scheduledPublish = null;
+        if (!empty($_POST['scheduled_publish'])) {
+            $scheduledPublish = date('Y-m-d H:i:s', strtotime($_POST['scheduled_publish']));
+        }
+
+        // Set Is_Active based on scheduling
+        $status = (empty($scheduledPublish) || strtotime($scheduledPublish) <= time()) ? 1 : 0;
+
         // Validate required fields
         if (empty($posttitle) || empty($catid) || empty($postdetails) || empty($reporter)) {
             $error = "Please fill all required fields.";
@@ -125,40 +136,62 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
             // Handle file upload
             $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
             list($uploadSuccess, $uploadResult) = handleFileUpload('postimage', 'images/postimages/', $allowedExtensions);
-            
+
             if (!$uploadSuccess) {
                 $error = $uploadResult;
             } else {
                 $imgnewfile = $uploadResult;
                 $date = date('Y-m-d h:i:s');
                 $status = 1;
-                
+
                 // Check if post title already exists
                 $checkQuery = mysqli_prepare($con, "SELECT id FROM tblposts WHERE PostTitle = ?");
                 mysqli_stmt_bind_param($checkQuery, 's', $posttitle);
                 mysqli_stmt_execute($checkQuery);
                 mysqli_stmt_store_result($checkQuery);
-                
+
                 if (mysqli_stmt_num_rows($checkQuery) > 0) {
                     $error = "Post title already exists. Please choose a different one.";
                 } else {
                     // Insert the new post
-                    $insertQuery = mysqli_prepare($con, 
+                    $insertQuery = mysqli_prepare(
+                        $con,
                         "INSERT INTO tblposts 
                         (PostTitle, CategoryId, PostDetails, PostUrl, Is_Active, On_Slider, 
                          On_Sportlingt, On_Article, On_Gfeed, On_Save, PostImage, repoter, 
-                         source, subtitle, photocap, seoshort, imageseo, seomkey, PostingDate, UpdationDate) 
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-                    
-                    mysqli_stmt_bind_param($insertQuery, 'sisssiiiiisissssssss', 
-                        $posttitle, $catid, $postdetails, $url, $status, $On_Slider, 
-                        $On_Sportlingt, $On_Article, $On_Gfeed, $On_Save, $imgnewfile, 
-                        $reporter, $source, $subtitle, $photocap, $seoshort, $imageseo, 
-                        $seomkey, $date, $date);
-                    
+                         source, subtitle, photocap, seoshort, imageseo, seomkey, PostingDate, UpdationDate,ScheduledPublish) 
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                    );
+
+                    mysqli_stmt_bind_param(
+                        $insertQuery,
+                        'sisssiiiiisissssssss',
+                        $posttitle,
+                        $catid,
+                        $postdetails,
+                        $url,
+                        $status,
+                        $On_Slider,
+                        $On_Sportlingt,
+                        $On_Article,
+                        $On_Gfeed,
+                        $On_Save,
+                        $imgnewfile,
+                        $reporter,
+                        $source,
+                        $subtitle,
+                        $photocap,
+                        $seoshort,
+                        $imageseo,
+                        $seomkey,
+                        $date,
+                        $date,
+                        $scheduledPublish
+                    );
+
                     if (mysqli_stmt_execute($insertQuery)) {
                         $msg = "Post successfully added";
-                        
+
                         // Create thumbnail
                         try {
                             $resizeObj = new resize("images/postimages/" . $imgnewfile);
@@ -211,17 +244,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
         .form-group label {
             font-size: 20px
         }
+
         .alert {
             margin-bottom: 20px;
         }
+
         .card {
             margin-bottom: 20px;
         }
     </style>
 </head>
 
-<body data-pc-header="header-1" data-pc-preset="preset-1" data-pc-sidebar-theme="light" 
-      data-pc-sidebar-caption="true" data-pc-direction="ltr" data-pc-theme="light">
+<body data-pc-header="header-1" data-pc-preset="preset-1" data-pc-sidebar-theme="light"
+    data-pc-sidebar-caption="true" data-pc-direction="ltr" data-pc-theme="light">
     <!-- Pre-loader -->
     <div class="loader-bg">
         <div class="loader-track">
@@ -273,7 +308,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                                         <strong>Success!</strong> <?php echo htmlspecialchars($msg); ?>
                                     </div>
                                 <?php endif; ?>
-                                
+
                                 <?php if ($error): ?>
                                     <div class="alert alert-danger" role="alert">
                                         <strong>Error!</strong> <?php echo htmlspecialchars($error); ?>
@@ -287,25 +322,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                                 <div class="p-6">
                                     <form name="addpost" method="post" enctype="multipart/form-data">
                                         <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
-                                        
+
                                         <div class="form-group m-b-20">
                                             <label>Post Title</label>
-                                            <input type="text" class="form-control" id="posttitle" name="posttitle" 
-                                                   placeholder="Enter title" value="<?php echo htmlspecialchars($posttitle); ?>" required>
+                                            <input type="text" class="form-control" id="posttitle" name="posttitle"
+                                                placeholder="Enter title" value="<?php echo htmlspecialchars($posttitle); ?>" required>
                                         </div>
-                                        
+
                                         <div class="form-group m-b-20">
                                             <label>Post Sub Title</label>
-                                            <input type="text" class="form-control" id="subtitle" name="subtitle" 
-                                                   placeholder="Enter sub title" value="<?php echo htmlspecialchars($subtitle); ?>">
+                                            <input type="text" class="form-control" id="subtitle" name="subtitle"
+                                                placeholder="Enter sub title" value="<?php echo htmlspecialchars($subtitle); ?>">
                                         </div>
-                                        
+
                                         <div class="form-group m-b-20">
                                             <label>Bottom Source</label>
-                                            <input type="text" class="form-control" id="source" name="source" 
-                                                   placeholder="Enter source" value="<?php echo htmlspecialchars($source); ?>" required>
+                                            <input type="text" class="form-control" id="source" name="source"
+                                                placeholder="Enter source" value="<?php echo htmlspecialchars($source); ?>" required>
                                         </div>
-                                        
+
                                         <div class="row">
                                             <div class="col-sm-6">
                                                 <div class="card">
@@ -317,7 +352,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                                                     </div>
                                                 </div>
                                             </div>
-                                            
+
                                             <div class="col-sm-6">
                                                 <div class="card">
                                                     <div class="card-body">
@@ -328,7 +363,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                                                     </div>
                                                 </div>
                                             </div>
-                                            
+
                                             <div class="col-sm-4">
                                                 <div class="card">
                                                     <div class="card-body">
@@ -339,7 +374,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                                                     </div>
                                                 </div>
                                             </div>
-                                            
+
                                             <div class="col-sm-4">
                                                 <div class="card">
                                                     <div class="card-body">
@@ -350,7 +385,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                                                     </div>
                                                 </div>
                                             </div>
-                                            
+
                                             <div class="col-sm-4">
                                                 <div class="card">
                                                     <div class="card-body">
@@ -362,14 +397,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                                                 </div>
                                             </div>
                                         </div>
-                                        
+
                                         <div class="form-group m-b-20">
                                             <label>Post Details</label>
                                             <textarea class="summernote" name="postdescription" required><?php echo htmlspecialchars($postdetails); ?></textarea>
                                         </div>
                                 </div>
                             </div>
-                            
+
                             <div class="col-md-4">
                                 <div class="form-group m-b-20">
                                     <label>Select News Image</label>
@@ -385,13 +420,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                                         };
                                     </script>
                                 </div>
-                                
+
                                 <div class="form-group m-b-20">
                                     <label>Photo Caption</label>
-                                    <input type="text" class="form-control" id="photocap" name="photocap" 
-                                           placeholder="Photo Caption" value="<?php echo htmlspecialchars($photocap); ?>">
+                                    <input type="text" class="form-control" id="photocap" name="photocap"
+                                        placeholder="Photo Caption" value="<?php echo htmlspecialchars($photocap); ?>">
                                 </div>
-                                
+
                                 <div class="form-group m-b-20">
                                     <label>Category</label>
                                     <select class="form-control" name="category" id="category" required>
@@ -400,13 +435,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                                         $ret = mysqli_query($con, "SELECT id, CategoryName FROM tblcategory WHERE Is_Active=1");
                                         while ($result = mysqli_fetch_array($ret)) {
                                             $selected = ($result['id'] == $catid) ? 'selected' : '';
-                                            echo '<option value="' . htmlspecialchars($result['id']) . '" ' . $selected . '>' 
+                                            echo '<option value="' . htmlspecialchars($result['id']) . '" ' . $selected . '>'
                                                 . htmlspecialchars($result['CategoryName']) . '</option>';
                                         }
                                         ?>
                                     </select>
                                 </div>
-                                
+
                                 <div class="form-group m-b-20">
                                     <label>Reporter</label>
                                     <select class="form-control" name="reporter" id="reporter" required>
@@ -415,35 +450,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                                         $rets = mysqli_query($con, "SELECT * FROM reporter WHERE deleted='false'");
                                         while ($result = mysqli_fetch_array($rets)) {
                                             $selected = ($result['reporterID'] == $reporter) ? 'selected' : '';
-                                            echo '<option value="' . htmlspecialchars($result['reporterID']) . '" ' . $selected . '>' 
+                                            echo '<option value="' . htmlspecialchars($result['reporterID']) . '" ' . $selected . '>'
                                                 . htmlspecialchars($result['name']) . '</option>';
                                         }
                                         ?>
                                     </select>
                                 </div>
-                                
+
+
+                                <div class="form-group m-b-20">
+                                    <label>Schedule Post (Leave empty for immediate publishing)</label>
+                                    <input type="datetime-local" class="form-control" id="scheduled_publish" name="scheduled_publish"
+                                        value="<?php echo !empty($scheduledPublish) ? date('Y-m-d\TH:i', strtotime($scheduledPublish)) : ''; ?>">
+                                </div>
+
                                 <hr>
                                 <h4 style="color:#2b71b4">Advanced SEO (Optional)</h4>
                                 <hr>
-                                
+
                                 <div class="form-group m-b-20">
                                     <label>SEO Post Short Details</label>
-                                    <input type="text" class="form-control" id="seoshort" name="seoshort" 
-                                           placeholder="Enter SEO Post Short Details" value="<?php echo htmlspecialchars($seoshort); ?>">
+                                    <input type="text" class="form-control" id="seoshort" name="seoshort"
+                                        placeholder="Enter SEO Post Short Details" value="<?php echo htmlspecialchars($seoshort); ?>">
                                 </div>
-                                
+
                                 <div class="form-group m-b-20">
                                     <label>SEO Post Image Name</label>
-                                    <input type="text" class="form-control" id="imageseo" name="imageseo" 
-                                           placeholder="Enter SEO Post Image Name" value="<?php echo htmlspecialchars($imageseo); ?>">
+                                    <input type="text" class="form-control" id="imageseo" name="imageseo"
+                                        placeholder="Enter SEO Post Image Name" value="<?php echo htmlspecialchars($imageseo); ?>">
                                 </div>
-                                
+
                                 <div class="form-group m-b-20">
                                     <label>SEO Meta Key Word</label>
-                                    <input type="text" class="form-control" id="seomkey" name="seomkey" 
-                                           placeholder="Enter SEO Meta Key Word" value="<?php echo htmlspecialchars($seomkey); ?>">
+                                    <input type="text" class="form-control" id="seomkey" name="seomkey"
+                                        placeholder="Enter SEO Meta Key Word" value="<?php echo htmlspecialchars($seomkey); ?>">
                                 </div>
-                                
+
                                 <button type="submit" name="submit" class="btn btn-success waves-effect waves-light">Publish Post</button>
                                 <button type="reset" class="btn btn-danger waves-effect waves-light">Reset Form</button>
                                 </form>
@@ -464,7 +506,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
     <script src="../plugins/jquery.filer/js/jquery.filer.min.js"></script>
     <script src="../plugins/select2/js/select2.min.js"></script>
     <script src="../plugins/switchery/switchery.min.js"></script>
-    
+
     <script>
         $(document).ready(function() {
             $('.summernote').summernote({
@@ -485,4 +527,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
         });
     </script>
 </body>
+
 </html>
