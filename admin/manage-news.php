@@ -404,13 +404,57 @@ $postsPerPage = 10;
         });
       }
 
+      $('.post-status').focus(function() {
+        $(this).data('previous', $(this).val());
+      });
+
+
+      // $('.post-status').change(function() {
+      //   var postId = $(this).data('post-id');
+      //   var newStatus = $(this).val();
+      //   var selectElement = $(this);
+
+      //   // Store old status for reverting if needed
+      //   var oldStatus = selectElement.val();
+
+      //   selectElement.prop('disabled', true);
+
+      //   $.ajax({
+      //     url: 'update-post-status.php',
+      //     type: 'POST',
+      //     data: {
+      //       post_id: postId,
+      //       new_status: newStatus
+      //     },
+      //     success: function(response) {
+      //       selectElement.prop('disabled', false);
+      //       console.log(response);
+
+      //       if (response.success === true) {
+      //         console.log('Status updated successfully!');
+      //         showAlert('success', 'Status updated successfully!');
+      //       } else {
+      //         console.log("error")
+      //         // Revert to old status
+      //         selectElement.val(oldStatus);
+      //         showAlert('error', response.message);
+      //       }
+      //     },
+      //     error: function(xhr, status, error) {
+      //       selectElement.prop('disabled', false);
+      //       selectElement.val(oldStatus);
+      //       showAlert('error', 'Error updating status. Please try again.');
+      //       console.error('AJAX Error:', error);
+      //     }
+      //   });
+      // });
       $('.post-status').change(function() {
         var postId = $(this).data('post-id');
         var newStatus = $(this).val();
         var selectElement = $(this);
 
-        // Store old status for reverting if needed
-        var oldStatus = selectElement.val();
+        // Get old status from data
+        var oldStatus = selectElement.data('previous');
 
         selectElement.prop('disabled', true);
 
@@ -421,6 +465,7 @@ $postsPerPage = 10;
             post_id: postId,
             new_status: newStatus
           },
+          dataType: 'json', // <— this ensures response is parsed correctly
           success: function(response) {
             selectElement.prop('disabled', false);
             console.log(response);
@@ -443,6 +488,7 @@ $postsPerPage = 10;
           }
         });
       });
+
     });
   </script>
 </body>
