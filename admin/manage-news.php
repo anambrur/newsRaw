@@ -29,7 +29,7 @@ function getQueryString($exclude = [])
 // Handle delete action
 if (isset($_GET['action']) && $_GET['action'] == 'del') {
   $postid = intval($_GET['pid']);
-  
+
   error_reporting(E_ALL);
   ini_set('display_errors', 1);
 
@@ -306,7 +306,7 @@ if ($searchQuery != '') {
                         <a href="../news-details?nid=<?php echo htmlentities($row['postid']); ?>" target="_blank" class="btn btn-sm btn-info">View</a>
                         <a href="edit-news.php?pid=<?php echo htmlentities($row['postid']); ?>" class="btn btn-sm btn-primary">Edit</a>
                         <?php if ($row['status'] != STATUS_BIN): ?>
-                          <a href="manage-posts.php?pid=<?php echo htmlentities($row['postid']); ?>&action=del" onclick="return confirm('Your News will be moved to trash')" class="btn btn-sm btn-danger">Move To Bin</a>
+                          <a href="manage-news.php?pid=<?php echo htmlentities($row['postid']); ?>&action=del" onclick="return confirm('Your News will be moved to trash')" class="btn btn-sm btn-danger">Move To Bin</a>
                         <?php else: ?>
                           <a href="restore-post.php?pid=<?php echo htmlentities($row['postid']); ?>" class="btn btn-sm btn-success">Restore</a>
                         <?php endif; ?>
