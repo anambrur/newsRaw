@@ -15,7 +15,7 @@ if (strlen($_SESSION['login']) == 0) {
 
 if (isset($_GET['pid'])) {
     $postid = intval($_GET['pid']);
-    $query = mysqli_query($con, "UPDATE tblposts SET Is_Active=".STATUS_DRAFT." WHERE id='$postid'");
+    $query = mysqli_query($con, "UPDATE tblposts SET Is_Active=" . STATUS_DRAFT . " WHERE id='$postid'");
     if ($query) {
         $_SESSION['msg'] = "Post restored successfully";
     } else {
@@ -23,5 +23,8 @@ if (isset($_GET['pid'])) {
     }
 }
 
-header("Location: manage-news.php?status=".STATUS_DELETED);
+// Return to the previous page with all parameters
+$referer = $_SERVER['HTTP_REFERER'] ?? 'manage-news.php';
+header("Location: $referer");
 exit();
+?>

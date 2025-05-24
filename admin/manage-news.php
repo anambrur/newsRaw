@@ -273,11 +273,11 @@ $postsPerPage = 10;
                               <td style="text-align:center">
                                 <?php if ($row['status'] != STATUS_DELETED): ?>
                                   <a href="../news-details?nid=<?php echo $row['postid']; ?>" target="_blank" class="btn btn-sm btn-info">View</a>
-                                  <a href="edit-news.php?pid=<?php echo $row['postid']; ?>" class="btn btn-primary">Edit</a>
+                                  <a href="edit-news.php?pid=<?php echo $row['postid']; ?>" class="btn btn-sm btn-primary">Edit</a>
                                   <a href="manage-news.php?pid=<?php echo $row['postid']; ?>&action=del" onclick="return confirm('Move this news to trash?')" class="btn btn-sm btn-danger">Trash</a>
                                 <?php else: ?>
                                   <a href="restore-post.php?pid=<?php echo $row['postid']; ?>" class="btn btn-sm btn-success">Restore</a>
-                                  <a href="delete-post-permanent.php?pid=<?php echo $row['postid']; ?>" onclick="return confirm('Permanently delete this post?')" class="btn btn-danger">Delete</a>
+                                  <a href="delete-post-permanent.php?pid=<?php echo $row['postid']; ?>" onclick="return confirm('Permanently delete this post?')" class="btn btn-sm btn-danger">Delete</a>
                                 <?php endif; ?>
                               </td>
                             </tr>
