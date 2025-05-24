@@ -16,6 +16,8 @@ try {
         AND ScheduledPublish <= '$currentDateTime' 
         AND Is_Active = 0"
     );
+    
+    print_r($query);
 
     if (!$query) {
         throw new Exception("Failed to fetch scheduled posts");
