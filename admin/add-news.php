@@ -127,7 +127,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
         }
 
         // Set Is_Active based on scheduling
-        $status = (empty($scheduledPublish) || strtotime($scheduledPublish) <= time()) ? 1 : 0;
+        $status = (empty($scheduledPublish) || strtotime($scheduledPublish) <= time()) ? 1 : 3;
 
         // Validate required fields
         if (empty($posttitle) || empty($catid) || empty($postdetails) || empty($reporter)) {

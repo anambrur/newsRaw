@@ -14,7 +14,7 @@ try {
         "SELECT id FROM tblposts 
         WHERE ScheduledPublish IS NOT NULL 
         AND ScheduledPublish <= '$currentDateTime' 
-        AND Is_Active = 0"
+        AND Is_Active = 3"
     );
 
     echo '<pre>';
