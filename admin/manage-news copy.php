@@ -14,29 +14,29 @@ if (strlen($_SESSION['login']) == 0) {
   exit();
 }
 
+// Handle delete action
+if (isset($_GET['action']) && $_GET['action'] == 'del') {
+  $postid = intval($_GET['pid']);
+  $query = mysqli_query($con, "UPDATE tblposts SET Is_Active=" . STATUS_BIN . " WHERE id='$postid'");
+  if ($query) {
+    $_SESSION['msg'] = "Post moved to trash";
+  } else {
+    $_SESSION['error'] = "Something went wrong. Please try again.";
+  }
+  header("Location: manage-posts.php" . getQueryString(['pid', 'action']));
+  exit();
+}
+
 // Function to build query string while preserving existing parameters
 function getQueryString($exclude = [])
 {
-    $params = [];
-    foreach ($_GET as $key => $value) {
-        if (!in_array($key, $exclude)) {
-            $params[$key] = $value;
-        }
+  $params = [];
+  foreach ($_GET as $key => $value) {
+    if (!in_array($key, $exclude)) {
+      $params[$key] = $value;
     }
-    return $params ? '?' . http_build_query($params) : '';
-}
-
-// Handle delete action
-if (isset($_GET['action']) && $_GET['action'] == 'del') {
-    $postid = intval($_GET['pid']);
-    $query = mysqli_query($con, "UPDATE tblposts SET Is_Active=" . STATUS_BIN . " WHERE id='$postid'");
-    if ($query) {
-        $_SESSION['msg'] = "Post moved to trash";
-    } else {
-        $_SESSION['error'] = "Something went wrong. Please try again.";
-    }
-    header("Location: manage-posts.php" . getQueryString(['pid', 'action']));
-    exit();
+  }
+  return $params ? '?' . http_build_query($params) : '';
 }
 
 // Handle status filter if set
