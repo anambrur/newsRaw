@@ -1,4 +1,5 @@
 <?php
+ob_start();
 session_start();
 include('includes/config.php');
 error_reporting(0);
@@ -26,24 +27,21 @@ function getQueryString($exclude = [])
   return $params ? '?' . http_build_query($params) : '';
 }
 
-// Handle delete action
-if (isset($_GET['action']) && $_GET['action'] == 'del') {
-  $postid = intval($_GET['pid']);
-
-  error_reporting(E_ALL);
-  ini_set('display_errors', 1);
-
-  error_log("Attempting to move post ID $postid to bin");
-  $query = mysqli_query($con, "UPDATE tblposts SET Is_Active=" . STATUS_BIN . " WHERE id='$postid'");
-  error_log("Query result: " . ($query ? "success" : "failed - " . mysqli_error($con)));
-
-  if ($query) {
-    $_SESSION['msg'] = "Post moved to trash";
-  } else {
-    $_SESSION['error'] = "Something went wrong. Please try again.";
-  }
-  header("Location: manage-posts.php" . getQueryString(['pid', 'action']));
-  exit();
+// Handle delete action first
+if(isset($_GET['action']) && $_GET['action'] == 'del') {
+    $postid = intval($_GET['pid']);
+    $query = mysqli_query($con,"UPDATE tblposts SET Is_Active=".STATUS_BIN." WHERE id='$postid'");
+    
+    if($query) {
+        $_SESSION['msg'] = "Post moved to trash";
+    } else {
+        $_SESSION['error'] = "Something went wrong. Please try again.";
+    }
+    
+    // Clear buffer before redirect
+    ob_end_clean();
+    header("Location: manage-news.php".getQueryString(['pid','action']));
+    exit();
 }
 
 // Handle status filter if set
