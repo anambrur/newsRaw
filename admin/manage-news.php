@@ -2,143 +2,163 @@
 session_start();
 include('includes/config.php');
 error_reporting(0);
-if(strlen($_SESSION['login'])==0)
-{
+
+// Define status constants
+define('STATUS_ACTIVE', 1);
+define('STATUS_DRAFT', 2);
+define('STATUS_SCHEDULED', 3);
+define('STATUS_DELETED', 4);
+
+if (strlen($_SESSION['login']) == 0) {
     header('location:index.php');
+    exit();
 }
-else{
-    if($_GET['action']='del')
-    {
-        $postid=intval($_GET['pid']);
-        $query=mysqli_query($con,"update tblposts set Is_Active=0 where id='$postid'");
-        if($query)
-        {
-            $msg="Post deleted ";
-        }
-        else{
-            $error="Something went wrong . Please try again.";
-        }
+
+// Handle delete action
+if (isset($_GET['action']) && $_GET['action'] == 'del') {
+    $postid = intval($_GET['pid']);
+    $query = mysqli_query($con, "UPDATE tblposts SET Is_Active=".STATUS_DELETED." WHERE id='$postid'");
+    if ($query) {
+        $_SESSION['msg'] = "Post moved to trash";
+    } else {
+        $_SESSION['error'] = "Something went wrong. Please try again.";
     }
-    ?>
-    <!DOCTYPE html>
-    <html lang="en">
-  <head>
-    <title>Home | Gradient Able Dashboard Template</title>
-    <!-- [Meta] -->
+    header("Location: manage-news.php");
+    exit();
+}
+
+// Handle status filter if set
+$statusFilter = "";
+if (isset($_GET['status']) && in_array($_GET['status'], [STATUS_ACTIVE, STATUS_DRAFT, STATUS_SCHEDULED, STATUS_DELETED])) {
+    $statusFilter = " AND tblposts.Is_Active = ".intval($_GET['status']);
+}
+?>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Manage News | Admin Panel</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimal-ui" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta
-      name="description"
-      content="Gradient Able is trending dashboard template made using Bootstrap 5 design framework. Gradient Able is available in Bootstrap, React, CodeIgniter, Angular,  and .net Technologies."
-    />
-    <meta
-      name="keywords"
-      content="Bootstrap admin template, Dashboard UI Kit, Dashboard Template, Backend Panel, react dashboard, angular dashboard"
-    />
-    <meta name="author" content="codedthemes" />
     <link href="https://fonts.cdnfonts.com/css/solaimanlipi" rel="stylesheet">
     <style>
-    @import url('https://fonts.cdnfonts.com/css/solaimanlipi');
+        @import url('https://fonts.cdnfonts.com/css/solaimanlipi');
     </style>
-    <!-- [Favicon] icon -->
     <link rel="icon" href="../assets/images/favicon.svg" type="image/x-icon" />
-
-    <!-- map-vector css -->
     <link rel="stylesheet" href="../assets/css/plugins/jsvectormap.min.css" />
-    <!-- [Google Font : Poppins] icon -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet" />
-
-    <!-- [Tabler Icons] https://tablericons.com -->
     <link rel="stylesheet" href="assets/fonts/tabler-icons.min.css" />
-    <!-- [Feather Icons] https://feathericons.com -->
     <link rel="stylesheet" href="assets/fonts/feather.css" />
-    <!-- [Font Awesome Icons] https://fontawesome.com/icons -->
     <link rel="stylesheet" href="assets/fonts/fontawesome.css" />
-    <!-- [Material Icons] https://fonts.google.com/icons -->
     <link rel="stylesheet" href="assets/fonts/material.css" />
-    <!-- [Template CSS Files] -->
     <link rel="stylesheet" href="assets/css/style.css" id="main-style-link" />
     <link rel="stylesheet" href="assets/css/style-preset.css" />
+    <style>
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+            margin-top: 5px;
+        }
+        .status-active { background-color: #28a745; color: white; }
+        .status-draft { background-color: #ffc107; color: black; }
+        .status-scheduled { background-color: #17a2b8; color: white; }
+        .status-deleted { background-color: #dc3545; color: white; }
+        select.post-status {
+            padding: 5px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            cursor: pointer;
+            width: 120px;
+        }
+        .status-filter {
+            margin-bottom: 15px;
+        }
+        .status-filter a {
+            margin-right: 10px;
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
+        .status-filter a.active {
+            background: #4b38b3;
+            color: white;
+        }
+    </style>
+</head>
 
-  </head>
-  <!-- [Head] end -->
-  <!-- [Body] Start -->
-
-  <body data-pc-header="header-1" data-pc-preset="preset-1" data-pc-sidebar-theme="light" data-pc-sidebar-caption="true" data-pc-direction="ltr" data-pc-theme="light">
+<body data-pc-header="header-1" data-pc-preset="preset-1" data-pc-sidebar-theme="light" data-pc-sidebar-caption="true" data-pc-direction="ltr" data-pc-theme="light">
     <!-- [ Pre-loader ] start -->
-<div class="loader-bg">
-  <div class="loader-track">
-    <div class="loader-fill"></div>
-  </div>
-</div>
-<!-- [ Pre-loader ] End -->
- <!-- [ Sidebar Menu ] start -->
-<nav class="pc-sidebar">
-    <?php include('includes/leftsidebar.php');?>
-</nav>
-<!-- [ Sidebar Menu ] end -->
- <!-- [ Header Topbar ] start -->
-    <?php include('includes/topheader.php');?>
-<!-- [ Header ] end -->
+    <div class="loader-bg">
+        <div class="loader-track">
+            <div class="loader-fill"></div>
+        </div>
+    </div>
+    <!-- [ Pre-loader ] End -->
+    
+    <!-- [ Sidebar Menu ] start -->
+    <nav class="pc-sidebar">
+        <?php include('includes/leftsidebar.php'); ?>
+    </nav>
+    <!-- [ Sidebar Menu ] end -->
+    
+    <!-- [ Header Topbar ] start -->
+    <?php include('includes/topheader.php'); ?>
+    <!-- [ Header ] end -->
 
-
-
-            <!-- ============================================================== -->
-            <!-- Start right Content here -->
-            <!-- ============================================================== -->
-
-                <!-- Start content -->
-                
-                
-                <!-- [ Main Content ] start -->
-                    <div class="pc-container">
-                      <div class="pc-content">
-                        <!-- [ breadcrumb ] start -->
-                        <div class="page-header">
-                          <div class="page-block card mb-0">
-                            <div class="card-body">
-                              <div class="row align-items-center">
-                                <div class="col-md-12">
-                                  <div class="page-header-title border-bottom pb-2 mb-2">
+    <!-- [ Main Content ] start -->
+    <div class="pc-container">
+        <div class="pc-content">
+            <!-- [ breadcrumb ] start -->
+            <div class="page-header">
+                <div class="page-block card mb-0">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-12">
+                                <div class="page-header-title border-bottom pb-2 mb-2">
                                     <h4 class="mb-0">Manage News</h4>
-                                  </div>
                                 </div>
-                                <div class="col-md-12">
-                                  <ul class="breadcrumb">
-                                    <li class="breadcrumb-item"
-                                      ><a href="../dashboard/index.html"><i class="ph ph-house"></i></a
-                                    ></li>
+                            </div>
+                            <div class="col-md-12">
+                                <ul class="breadcrumb">
+                                    <li class="breadcrumb-item"><a href="../dashboard/index.html"><i class="ph ph-house"></i></a></li>
                                     <li class="breadcrumb-item"><a href="javascript: void(0)">News Room</a></li>
                                     <li class="breadcrumb-item" aria-current="page">Manage News</li>
-                                  </ul>
-                                </div>
-                              </div>
+                                </ul>
                             </div>
-                          </div>
                         </div>
-                        <!-- [ breadcrumb ] end -->
-                
-                
-                        <!-- [ Main Content ] start -->
+                    </div>
+                </div>
+            </div>
+            <!-- [ breadcrumb ] end -->
+
+            <!-- [ Main Content ] start -->
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="card" style="padding: 25px;">
                         <div class="row">
-                          <!-- [ sample-page ] start -->
-                          <div class="col-sm-12">
-                            <div class="card" style="padding: 25px;">
-                              
-                              
-                              
-                              
-                              
-                              <div class="row">
                             <div class="col-sm-12">
                                 <div class="demo-box m-t-20">
-                                    
+                                    <!-- Status Filter -->
+                                    <div class="status-filter">
+                                        <strong>Filter by Status: </strong>
+                                        <a href="manage-news.php" class="<?php echo !isset($_GET['status']) ? 'active' : ''; ?>">All</a>
+                                        <a href="manage-news.php?status=<?php echo STATUS_ACTIVE; ?>" class="<?php echo (isset($_GET['status']) && $_GET['status'] == STATUS_ACTIVE ? 'active' : ''; ?>">Active</a>
+                                        <a href="manage-news.php?status=<?php echo STATUS_DRAFT; ?>" class="<?php echo (isset($_GET['status']) && $_GET['status'] == STATUS_DRAFT ? 'active' : ''; ?>">Draft</a>
+                                        <a href="manage-news.php?status=<?php echo STATUS_SCHEDULED; ?>" class="<?php echo (isset($_GET['status']) && $_GET['status'] == STATUS_SCHEDULED ? 'active' : ''; ?>">Scheduled</a>
+                                        <a href="manage-news.php?status=<?php echo STATUS_DELETED; ?>" class="<?php echo (isset($_GET['status']) && $_GET['status'] == STATUS_DELETED ? 'active' : ''; ?>">Trash</a>
+                                    </div>
+
                                     <div class="row m-b-20">
                                         <div class="col-lg-5">
                                             <form method="GET" action="manage-news.php">
+                                                <?php if (isset($_GET['status'])): ?>
+                                                    <input type="hidden" name="status" value="<?php echo htmlspecialchars($_GET['status']); ?>">
+                                                <?php endif; ?>
                                                 <div class="input-group">
-                                                    <input type="text" class="form-control" name="search" placeholder="Search posts by title or category" value="<?php echo isset($_GET['search']) ? $_GET['search'] : ''; ?>">
+                                                    <input type="text" class="form-control" name="search" placeholder="Search posts by title or category" value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>">
                                                     <span class="input-group-btn">
                                                         <button class="btn btn-primary" type="submit" style="height: 50px;">Search</button>
                                                     </span>
@@ -146,7 +166,7 @@ else{
                                             </form>
                                         </div>
                                     </div>
-                                    
+
                                     <div class="table-responsive">
                                         <table class="table m-0 table-colored-bordered table-bordered-primary" id="myTableb">
                                             <thead>
@@ -154,187 +174,261 @@ else{
                                                     <th>Post Image</th>
                                                     <th>Post Title</th>
                                                     <th>Category</th>
-                                                    <?php if($_SESSION['role']=='admin'){ ?>
-                                                    <th>View</th>
+                                                    <?php if ($_SESSION['role'] == 'admin') { ?>
+                                                        <th>Views</th>
                                                     <?php } ?>
+                                                    <th>Status</th>
                                                     <th style="text-align:center">Action</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 <?php
-                                                if(isset($_GET['page'])){
-                                                    $page=$_GET['page'];
-                                                }else{
-                                                    $page=0;
+                                                $page = isset($_GET['page']) ? max(0, intval($_GET['page'])) : 0;
+                                                $offset = $page * 20;
+                                                $searchQuery = isset($_GET['search']) ? mysqli_real_escape_string($con, $_GET['search']) : '';
+
+                                                $searchCondition = "";
+                                                if (!empty($searchQuery)) {
+                                                    $searchCondition = " AND (tblposts.PostTitle LIKE '%$searchQuery%' OR tblcategory.CategoryName LIKE '%$searchQuery%')";
                                                 }
-                                                    $offset=$page*20;
-                                                    
-                                                    
-                                                    $searchQuery = isset($_GET['search']) ? $_GET['search'] : '';
-                                                
-                                                
-                                                    $searchCondition = "";
-                                                
-                                                    if($searchQuery != ''){
-                                                        $searchCondition = " AND (tblposts.PostTitle LIKE '%$searchQuery%' OR tblcategory.CategoryName LIKE '%$searchQuery%')";
-                                                    }
-                                                
-                                                    if(isset($_GET['page'])){
-                                                        $page=$_GET['page'];
-                                                    }else{
-                                                        $page=0;
-                                                    }
-                                                    $offset=$page*20;
-                                                
-                                                
-                                                    $query=mysqli_query($con,"SELECT tblposts.id as postid, tblposts.PostTitle as title, tblposts.PostImage, tblposts.views, tblcategory.CategoryName as category, tblsubcategory.Subcategory as subcategory 
-                                                                              FROM tblposts 
-                                                                              LEFT JOIN tblcategory ON tblcategory.id=tblposts.CategoryId 
-                                                                              LEFT JOIN tblsubcategory ON tblsubcategory.SubCategoryId=tblposts.SubCategoryId 
-                                                                              WHERE tblposts.Is_Active=1 $searchCondition 
-                                                                              ORDER BY tblposts.id DESC 
-                                                                              LIMIT $offset,20");
-                                                    
-    
-                                                  $rowcount=mysqli_num_rows($query);
-                                                    if($rowcount==0)
-                                                    {
+
+                                                $query = mysqli_query($con, "SELECT tblposts.id as postid, tblposts.PostTitle as title, 
+                                                    tblposts.PostImage, tblposts.views, tblposts.Is_Active as status, 
+                                                    tblposts.ScheduledPublish, tblcategory.CategoryName as category, 
+                                                    tblsubcategory.Subcategory as subcategory 
+                                                    FROM tblposts 
+                                                    LEFT JOIN tblcategory ON tblcategory.id=tblposts.CategoryId 
+                                                    LEFT JOIN tblsubcategory ON tblsubcategory.SubCategoryId=tblposts.SubCategoryId 
+                                                    WHERE 1=1 $statusFilter $searchCondition 
+                                                    ORDER BY tblposts.id DESC 
+                                                    LIMIT $offset, 20");
+
+                                                if (mysqli_num_rows($query) == 0) {
                                                 ?>
                                                     <tr>
-                                                        <td colspan="4" align="center"><h3 style="color:red">No record found</h3></td>
-                                                        <tr>
-                                                            <?php
-                                                        } else {
-                                                            $i=0;
-                                                            while($row=mysqli_fetch_array($query))
-                                                            {
-                                                                ?>
-                                                                <tr>
-                                                                    <td> <img  src="images/thumb/<?php echo $row['PostImage']; ?>" style="width: 90px;height: 50px;"> </td>
-                                                                    <td><b> <p style="font-family: 'SolaimanLipi', sans-serif; font-size:18px"> <?php echo htmlentities($row['title']);?> </p></b></td>
-                                                                    <td><p style="font-family: 'SolaimanLipi', sans-serif; font-size:18px"> <?php echo htmlentities($row['category'])?></p></td>
-                                                                    <?php if($_SESSION['role']=='admin'){ ?>
-                                                                    <td><p style="font-family: 'SolaimanLipi', sans-serif; font-size:18px"><?php echo htmlentities($row['views'])?></p></td>
-                                                                    <?php } ?>
-                                                                    <td>
-                                                                        <a href="../news-details?nid=<?php echo htmlentities($row['postid']);?>" target="_blank"><button type="button" class="btn btn-info">View</button></a>&nbsp;
-                                                                        <a href="edit-news.php?pid=<?php echo htmlentities($row['postid']);?>"><button type="button" class="btn btn-primary">Edit</button></a>&nbsp;
-                                                                        <a href="manage-posts.php?pid=<?php echo htmlentities($row['postid']);?>&&action=del" onclick="return confirm('Your News Move In Recycle Bin')"> <button type="button" class="btn btn-danger">Move To Bin</button></a> 
-                                                                    </td>
-                                                                    </tr>
-                                                                    <?php } }?>
-                                                                    
-                                                                </tbody>
-                                                            </table>
-                                                            <?php 
-                                                            $qa=mysqli_query($con,"select tblposts.id as postid,tblposts.PostTitle as title,tblposts.views,tblcategory.CategoryName as category,tblsubcategory.Subcategory as subcategory from tblposts left join tblcategory on tblcategory.id=tblposts.CategoryId left join tblsubcategory on tblsubcategory.SubCategoryId=tblposts.SubCategoryId where tblposts.Is_Active=1 ORDER BY tblposts.id DESC");
-                                                            $all=mysqli_num_rows($qa);
-                                                            $pageCount=(int)($all/20);
-                                                            ?>
-                                                            <style type="text/css">
-                                                            a[disabled="disabled"] {
-                                                                pointer-events: none;
-                                                            }
-                                                            </style>
-                                                            <div style="text-align: center;padding-top: 20px;">
-                                                                <?php if($page==0){ ?>
-                                                                <a href="javascript:void(0)" disabled="disabled"><button type="button" class="btn btn-primary">Previous Page</button></a>
-                                                                <?php }else{?>
-                                                                <a href="manage-posts.php?page=<?php echo $page-1 ?>" >Previous Page</a>
-                                                                <?php } ?>
-                                                                
-                                                                
-                                                                <?php if($page<$pageCount){ ?>
-                                                                    <a href="manage-posts.php?page=<?php echo $page+1 ?>"><button type="button" class="btn btn-primary"> Next Page</button></a>
-                                                                <?php }else{ ?>
-                                                                <a href="javascript:void(0)" disabled="disabled"><button type="button" class="btn btn-primary"> Next Page</button></a>
-                                                                <?php } ?>
-                                                            </div>
-                                                    </div>
-                                                </div>
-                                            </div>
+                                                        <td colspan="<?php echo ($_SESSION['role'] == 'admin') ? 6 : 5; ?>" align="center">
+                                                            <h3 style="color:red">No records found</h3>
+                                                        </td>
+                                                    </tr>
+                                                <?php
+                                                } else {
+                                                    while ($row = mysqli_fetch_array($query)) {
+                                                        // Determine status text and class
+                                                        $statusText = '';
+                                                        $statusClass = '';
+                                                        switch ($row['status']) {
+                                                            case STATUS_ACTIVE:
+                                                                $statusText = 'Active';
+                                                                $statusClass = 'status-active';
+                                                                break;
+                                                            case STATUS_DRAFT:
+                                                                $statusText = 'Draft';
+                                                                $statusClass = 'status-draft';
+                                                                break;
+                                                            case STATUS_SCHEDULED:
+                                                                $statusText = 'Scheduled';
+                                                                $statusClass = 'status-scheduled';
+                                                                break;
+                                                            case STATUS_DELETED:
+                                                                $statusText = 'Deleted';
+                                                                $statusClass = 'status-deleted';
+                                                                break;
+                                                            default:
+                                                                $statusText = 'Unknown';
+                                                                $statusClass = '';
+                                                        }
+                                                ?>
+                                                    <tr id="post-row-<?php echo $row['postid']; ?>">
+                                                        <td><img src="images/thumb/<?php echo htmlspecialchars($row['PostImage']); ?>" style="width: 90px;height: 50px;"></td>
+                                                        <td><b><p style="font-family: 'SolaimanLipi', sans-serif; font-size:18px"><?php echo htmlentities($row['title']); ?></p></b></td>
+                                                        <td><p style="font-family: 'SolaimanLipi', sans-serif; font-size:18px"><?php echo htmlentities($row['category']); ?></p></td>
+                                                        <?php if ($_SESSION['role'] == 'admin') { ?>
+                                                            <td><p style="font-family: 'SolaimanLipi', sans-serif; font-size:18px"><?php echo htmlentities($row['views']); ?></p></td>
+                                                        <?php } ?>
+                                                        <td>
+                                                            <?php if ($row['status'] != STATUS_DELETED): ?>
+                                                                <select class="post-status" data-post-id="<?php echo $row['postid']; ?>">
+                                                                    <option value="<?php echo STATUS_ACTIVE; ?>" <?php echo $row['status'] == STATUS_ACTIVE ? 'selected' : ''; ?>>Active</option>
+                                                                    <option value="<?php echo STATUS_DRAFT; ?>" <?php echo $row['status'] == STATUS_DRAFT ? 'selected' : ''; ?>>Draft</option>
+                                                                    <option value="<?php echo STATUS_SCHEDULED; ?>" <?php echo $row['status'] == STATUS_SCHEDULED ? 'selected' : ''; ?>>Scheduled</option>
+                                                                </select>
+                                                            <?php endif; ?>
+                                                            <span class="status-badge <?php echo $statusClass; ?>"><?php echo $statusText; ?></span>
+                                                            <?php if ($row['status'] == STATUS_SCHEDULED && !empty($row['ScheduledPublish'])): ?>
+                                                                <br><small>Scheduled for: <?php echo date('M j, Y H:i', strtotime($row['ScheduledPublish'])); ?></small>
+                                                            <?php endif; ?>
+                                                        </td>
+                                                        <td style="text-align:center">
+                                                            <?php if ($row['status'] != STATUS_DELETED): ?>
+                                                                <a href="../news-details?nid=<?php echo $row['postid']; ?>" target="_blank" class="btn btn-info">View</a>
+                                                                <a href="edit-news.php?pid=<?php echo $row['postid']; ?>" class="btn btn-primary">Edit</a>
+                                                                <a href="manage-news.php?pid=<?php echo $row['postid']; ?>&action=del" onclick="return confirm('Move this news to trash?')" class="btn btn-danger">Trash</a>
+                                                            <?php else: ?>
+                                                                <a href="restore-post.php?pid=<?php echo $row['postid']; ?>" class="btn btn-success">Restore</a>
+                                                                <a href="delete-post-permanent.php?pid=<?php echo $row['postid']; ?>" onclick="return confirm('Permanently delete this post?')" class="btn btn-danger">Delete</a>
+                                                            <?php endif; ?>
+                                                        </td>
+                                                    </tr>
+                                                <?php 
+                                                    } 
+                                                } 
+                                                ?>
+                                            </tbody>
+                                        </table>
+                                        
+                                        <?php
+                                        // Pagination
+                                        $countQuery = mysqli_query($con, "SELECT COUNT(*) as total FROM tblposts WHERE 1=1 $statusFilter $searchCondition");
+                                        $totalRows = mysqli_fetch_assoc($countQuery)['total'];
+                                        $pageCount = ceil($totalRows / 20);
+                                        ?>
+                                        <style type="text/css">
+                                            a[disabled="disabled"] {
+                                                pointer-events: none;
+                                                opacity: 0.6;
+                                            }
+                                            .pagination {
+                                                display: flex;
+                                                justify-content: center;
+                                                margin-top: 20px;
+                                            }
+                                            .pagination a {
+                                                margin: 0 5px;
+                                                padding: 5px 10px;
+                                                border: 1px solid #ddd;
+                                                border-radius: 4px;
+                                            }
+                                            .pagination a.active {
+                                                background: #4b38b3;
+                                                color: white;
+                                                border-color: #4b38b3;
+                                            }
+                                        </style>
+                                        <div class="pagination">
+                                            <?php if ($page > 0): ?>
+                                                <a href="manage-news.php?page=<?php echo $page - 1; ?><?php echo isset($_GET['status']) ? '&status='.$_GET['status'] : ''; ?><?php echo isset($_GET['search']) ? '&search='.$_GET['search'] : ''; ?>">Previous</a>
+                                            <?php else: ?>
+                                                <a href="javascript:void(0)" disabled="disabled">Previous</a>
+                                            <?php endif; ?>
+
+                                            <?php for ($i = 0; $i < $pageCount; $i++): ?>
+                                                <a href="manage-news.php?page=<?php echo $i; ?><?php echo isset($_GET['status']) ? '&status='.$_GET['status'] : ''; ?><?php echo isset($_GET['search']) ? '&search='.$_GET['search'] : ''; ?>" class="<?php echo $page == $i ? 'active' : ''; ?>"><?php echo $i + 1; ?></a>
+                                            <?php endfor; ?>
+
+                                            <?php if ($page < $pageCount - 1): ?>
+                                                <a href="manage-news.php?page=<?php echo $page + 1; ?><?php echo isset($_GET['status']) ? '&status='.$_GET['status'] : ''; ?><?php echo isset($_GET['search']) ? '&search='.$_GET['search'] : ''; ?>">Next</a>
+                                            <?php else: ?>
+                                                <a href="javascript:void(0)" disabled="disabled">Next</a>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            
-                            
-                              <div class="card-body"> </div>
-                            </div>
-                          </div>
-                          <!-- [ sample-page ] end -->
                         </div>
-                        <!-- [ Main Content ] end -->
-                      </div>
+                        <div class="card-body"></div>
                     </div>
-                    <!-- [ Main Content ] end -->
-                <?php include('includes/footer.php');?>
-
+                </div>
             </div>
-
-
-            <!-- ============================================================== -->
-            <!-- End Right content here -->
-            <!-- ============================================================== -->
-
-
+            <!-- [ Main Content ] end -->
         </div>
-        <!-- END wrapper -->
+    </div>
+    <!-- [ Main Content ] end -->
+    <?php include('includes/footer.php'); ?>
 
+    <!-- jQuery -->
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/js/bootstrap.min.js"></script>
+    <script src="assets/js/detect.js"></script>
+    <script src="assets/js/fastclick.js"></script>
+    <script src="assets/js/jquery.blockUI.js"></script>
+    <script src="assets/js/waves.js"></script>
+    <script src="assets/js/jquery.slimscroll.js"></script>
+    <script src="assets/js/jquery.scrollTo.min.js"></script>
+    <script src="../plugins/switchery/switchery.min.js"></script>
+    <script src="../plugins/summernote/summernote.min.js"></script>
+    <script src="../plugins/select2/js/select2.min.js"></script>
+    <script src="../plugins/jquery.filer/js/jquery.filer.min.js"></script>
+    <script src="assets/pages/jquery.blog-add.init.js"></script>
+    <script src="assets/js/jquery.core.js"></script>
+    <script src="assets/js/jquery.app.js"></script>
 
-
-        <script>
-        var resizefunc = [];
-        </script>
-
-        <!-- jQuery  -->
-        <script src="assets/js/jquery.min.js"></script>
-        <script src="assets/js/bootstrap.min.js"></script>
-        <script src="assets/js/detect.js"></script>
-        <script src="assets/js/fastclick.js"></script>
-        <script src="assets/js/jquery.blockUI.js"></script>
-        <script src="assets/js/waves.js"></script>
-        <script src="assets/js/jquery.slimscroll.js"></script>
-        <script src="assets/js/jquery.scrollTo.min.js"></script>
-        <script src="../plugins/switchery/switchery.min.js"></script>
-
-        <!--Summernote js-->
-        <script src="../plugins/summernote/summernote.min.js"></script>
-        <!-- Select 2 -->
-        <script src="../plugins/select2/js/select2.min.js"></script>
-        <!-- Jquery filer js -->
-        <script src="../plugins/jquery.filer/js/jquery.filer.min.js"></script>
-
-        <!-- page specific js -->
-        <script src="assets/pages/jquery.blog-add.init.js"></script>
-
-        <!-- App js -->
-        <script src="assets/js/jquery.core.js"></script>
-        <script src="assets/js/jquery.app.js"></script>
-
-        <script>
-
-        jQuery(document).ready(function(){
-
-            $('.summernote').summernote({
-                    height: 240,                 // set editor height
-                    minHeight: null,             // set minimum height of editor
-                    maxHeight: null,             // set maximum height of editor
-                    focus: false                 // set focus to editable area after initializing summernote
-                });
-                // Select2
-                $(".select2").select2();
-
-                $(".select2-limiting").select2({
-                    maximumSelectionLength: 2
-                });
+    <!-- AJAX Script for Status Update -->
+    <script>
+    $(document).ready(function() {
+        $('.post-status').change(function() {
+            var postId = $(this).data('post-id');
+            var newStatus = $(this).val();
+            var row = $('#post-row-' + postId);
+            var badge = row.find('.status-badge');
+            
+            // Store old values in case we need to revert
+            var oldStatus = badge.text();
+            var oldClass = badge.attr('class').replace('status-badge ', '');
+            
+            $.ajax({
+                url: 'update-post-status.php',
+                type: 'POST',
+                data: {
+                    post_id: postId,
+                    new_status: newStatus
+                },
+                beforeSend: function() {
+                    badge.text('Updating...').removeClass('status-active status-draft status-scheduled');
+                },
+                success: function(response) {
+                    if (response.success) {
+                        // Update status badge
+                        var statusText = '';
+                        var statusClass = '';
+                        
+                        switch (parseInt(newStatus)) {
+                            case <?php echo STATUS_ACTIVE; ?>:
+                                statusText = 'Active';
+                                statusClass = 'status-active';
+                                break;
+                            case <?php echo STATUS_DRAFT; ?>:
+                                statusText = 'Draft';
+                                statusClass = 'status-draft';
+                                break;
+                            case <?php echo STATUS_SCHEDULED; ?>:
+                                statusText = 'Scheduled';
+                                statusClass = 'status-scheduled';
+                                break;
+                        }
+                        
+                        badge.text(statusText)
+                            .removeClass('status-active status-draft status-scheduled')
+                            .addClass(statusClass);
+                            
+                        // Show success message
+                        $('<div class="alert alert-success">Status updated successfully!</div>')
+                            .insertBefore('.table-responsive')
+                            .delay(3000)
+                            .fadeOut(function() { $(this).remove(); });
+                    } else {
+                        // Revert selection and show error
+                        $(this).val(response.old_status);
+                        badge.text(oldStatus).removeClass('status-active status-draft status-scheduled').addClass(oldClass);
+                        
+                        $('<div class="alert alert-danger">Error: ' + response.message + '</div>')
+                            .insertBefore('.table-responsive')
+                            .delay(3000)
+                            .fadeOut(function() { $(this).remove(); });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    // Revert selection
+                    $(this).val(response.old_status);
+                    badge.text(oldStatus).removeClass('status-active status-draft status-scheduled').addClass(oldClass);
+                    
+                    $('<div class="alert alert-danger">Error updating status. Please try again.</div>')
+                        .insertBefore('.table-responsive')
+                        .delay(3000)
+                        .fadeOut(function() { $(this).remove(); });
+                }
             });
-        </script>
-        <script src="../plugins/switchery/switchery.min.js"></script>
-
-        <!--Summernote js-->
-        <script src="../plugins/summernote/summernote.min.js"></script>
-
-
-
-
-    </body>
-    </html>
-    <?php } ?>
+        });
+    });
+    </script>
+</body>
+</html>
