@@ -142,7 +142,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
             } else {
                 $imgnewfile = $uploadResult;
                 $date = date('Y-m-d h:i:s');
-                $status = 1;
 
                 // Check if post title already exists
                 $checkQuery = mysqli_prepare($con, "SELECT id FROM tblposts WHERE PostTitle = ?");
@@ -157,10 +156,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                     $insertQuery = mysqli_prepare(
                         $con,
                         "INSERT INTO tblposts 
-                        (PostTitle, CategoryId, PostDetails, PostUrl, Is_Active, On_Slider, 
-                         On_Sportlingt, On_Article, On_Gfeed, On_Save, PostImage, repoter, 
-                         source, subtitle, photocap, seoshort, imageseo, seomkey, PostingDate, UpdationDate,ScheduledPublish) 
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                (PostTitle, CategoryId, PostDetails, PostUrl, Is_Active, On_Slider, 
+                 On_Sportlingt, On_Article, On_Gfeed, On_Save, PostImage, repoter, 
+                 source, subtitle, photocap, seoshort, imageseo, seomkey, PostingDate, UpdationDate, ScheduledPublish) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
                     );
 
                     mysqli_stmt_bind_param(
@@ -170,7 +169,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                         $catid,
                         $postdetails,
                         $url,
-                        $status,
+                        $status,  // This now properly reflects the scheduled status
                         $On_Slider,
                         $On_Sportlingt,
                         $On_Article,
@@ -190,7 +189,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                     );
 
                     if (mysqli_stmt_execute($insertQuery)) {
-                        $msg = "Post successfully added";
+                        $msg = "Post successfully " . ($status ? "published" : "scheduled");
 
                         // Create thumbnail
                         try {
