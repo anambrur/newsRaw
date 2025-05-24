@@ -61,6 +61,14 @@ if (strlen($_SESSION['login']) == 0) {
 
         //if title already exists without current id
         $query = mysqli_query($con, "SELECT * FROM tblposts WHERE PostTitle='$posttitle' and id!='$postid' ");
+
+
+        echo '<pre>';
+        print_r($query);
+        echo '</pre>';
+
+
+
         $count = mysqli_num_rows($query);
         if ($count > 0) {
             $error = "Post title already exists. Please choose a different one.";
