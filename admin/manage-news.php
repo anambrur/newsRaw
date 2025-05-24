@@ -206,7 +206,7 @@ if ($searchQuery != '') {
               </div>
             <?php } ?>
 
-            <div class="row m-b-20">
+            <!-- <div class="row m-b-20">
               <div class="col-lg-5">
                 <form method="GET" action="manage-posts.php" class="row">
                   <div class="col-md-8">
@@ -236,7 +236,7 @@ if ($searchQuery != '') {
                   </div>
                 </form>
               </div>
-            </div>
+            </div> -->
 
             <div class="table-responsive">
               <table class="table m-0 table-colored-bordered table-bordered-primary" id="myTableb">
