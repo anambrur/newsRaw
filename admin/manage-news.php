@@ -45,9 +45,20 @@ if (isset($_GET['action']) && $_GET['action'] == 'del') {
 }
 
 // Handle status filter if set
-$statusFilter = "";
-if (isset($_GET['status']) && in_array($_GET['status'], [STATUS_ACTIVE, STATUS_DRAFT, STATUS_SCHEDULED])) {
-  $statusFilter = " AND tblposts.Is_Active = " . intval($_GET['status']);
+// $statusFilter = "";
+// if (isset($_GET['status']) && in_array($_GET['status'], [STATUS_ACTIVE, STATUS_DRAFT, STATUS_SCHEDULED])) {
+//   $statusFilter = " AND tblposts.Is_Active = " . intval($_GET['status']);
+// }
+
+$statusFilter = " AND tblposts.Is_Active != " . STATUS_BIN; // Default: Exclude bin items
+if (isset($_GET['status']) && in_array($_GET['status'], [STATUS_ACTIVE, STATUS_DRAFT, STATUS_SCHEDULED, STATUS_BIN])) {
+    if ($_GET['status'] == STATUS_BIN) {
+        // When specifically viewing bin, show only bin items
+        $statusFilter = " AND tblposts.Is_Active = " . STATUS_BIN;
+    } else {
+        // When viewing other statuses, show only that status
+        $statusFilter = " AND tblposts.Is_Active = " . intval($_GET['status']);
+    }
 }
 
 // Number of posts per page
