@@ -459,7 +459,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
 
 
                                 <div class="form-group m-b-20">
-                                    <label>Schedule Post (Leave empty for immediate publishing)</label>
+                                    <label>Schedule Post</label>
+                                    <p>(Leave empty for immediate publishing)</p>
                                     <input type="datetime-local" class="form-control" id="scheduled_publish" name="scheduled_publish"
                                         value="<?php echo !empty($scheduledPublish) ? date('Y-m-d\TH:i', strtotime($scheduledPublish)) : ''; ?>">
                                 </div>
