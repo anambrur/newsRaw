@@ -32,6 +32,9 @@ $statusFilter = "";
 if (isset($_GET['status']) && in_array($_GET['status'], [STATUS_ACTIVE, STATUS_DRAFT, STATUS_SCHEDULED, STATUS_DELETED])) {
   $statusFilter = " AND tblposts.Is_Active = " . intval($_GET['status']);
 }
+
+// Number of posts per page
+$postsPerPage = 10;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -54,6 +57,8 @@ if (isset($_GET['status']) && in_array($_GET['status'], [STATUS_ACTIVE, STATUS_D
   <link rel="stylesheet" href="assets/fonts/material.css" />
   <link rel="stylesheet" href="assets/css/style.css" id="main-style-link" />
   <link rel="stylesheet" href="assets/css/style-preset.css" />
+  <!-- SweetAlert2 CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
   <style>
     .status-badge {
       padding: 5px 10px;
@@ -105,6 +110,38 @@ if (isset($_GET['status']) && in_array($_GET['status'], [STATUS_ACTIVE, STATUS_D
     .status-filter a.active {
       background: #4b38b3;
       color: white;
+    }
+
+    .pagination {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+
+    .pagination a,
+    .pagination span {
+      margin: 0 5px;
+      padding: 5px 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      display: inline-block;
+      margin-bottom: 5px;
+    }
+
+    .pagination a.active {
+      background: #4b38b3;
+      color: white;
+      border-color: #4b38b3;
+    }
+
+    a[disabled="disabled"] {
+      pointer-events: none;
+      opacity: 0.6;
+    }
+
+    .swal2-popup {
+      font-size: 1.6rem !important;
     }
   </style>
 </head>
@@ -162,6 +199,8 @@ if (isset($_GET['status']) && in_array($_GET['status'], [STATUS_ACTIVE, STATUS_D
               <div class="col-sm-12">
                 <div class="demo-box m-t-20">
                   <!-- Status Filter -->
+
+
                   <div class="status-filter">
                     <strong>Filter by Status: </strong>
                     <a href="manage-news.php" class="<?php echo !isset($_GET['status']) ? 'active' : ''; ?>">All</a>
@@ -205,7 +244,7 @@ if (isset($_GET['status']) && in_array($_GET['status'], [STATUS_ACTIVE, STATUS_D
                       <tbody>
                         <?php
                         $page = isset($_GET['page']) ? max(0, intval($_GET['page'])) : 0;
-                        $offset = $page * 20;
+                        $offset = $page * $postsPerPage;
                         $searchQuery = isset($_GET['search']) ? mysqli_real_escape_string($con, $_GET['search']) : '';
 
                         $searchCondition = "";
@@ -222,7 +261,7 @@ if (isset($_GET['status']) && in_array($_GET['status'], [STATUS_ACTIVE, STATUS_D
                                                     LEFT JOIN tblsubcategory ON tblsubcategory.SubCategoryId=tblposts.SubCategoryId 
                                                     WHERE 1=1 $statusFilter $searchCondition 
                                                     ORDER BY tblposts.id DESC 
-                                                    LIMIT $offset, 20");
+                                                    LIMIT $offset, $postsPerPage");
 
                         if (mysqli_num_rows($query) == 0) {
                         ?>
@@ -280,9 +319,7 @@ if (isset($_GET['status']) && in_array($_GET['status'], [STATUS_ACTIVE, STATUS_D
                                     <option value="<?php echo STATUS_SCHEDULED; ?>" <?php echo $row['status'] == STATUS_SCHEDULED ? 'selected' : ''; ?>>Scheduled</option>
                                   </select>
                                 <?php endif; ?>
-
-                                <!-- <span class="status-badge <?php echo $statusClass; ?>"><?php echo $statusText; ?></span> -->
-
+                                <span class="status-badge <?php echo $statusClass; ?>"><?php echo $statusText; ?></span>
                                 <?php if ($row['status'] == STATUS_SCHEDULED && !empty($row['ScheduledPublish'])): ?>
                                   <br><small>Scheduled for: <?php echo date('M j, Y H:i', strtotime($row['ScheduledPublish'])); ?></small>
                                 <?php endif; ?>
@@ -309,50 +346,62 @@ if (isset($_GET['status']) && in_array($_GET['status'], [STATUS_ACTIVE, STATUS_D
                     // Pagination
                     $countQuery = mysqli_query($con, "SELECT COUNT(*) as total FROM tblposts WHERE 1=1 $statusFilter $searchCondition");
                     $totalRows = mysqli_fetch_assoc($countQuery)['total'];
-                    $pageCount = ceil($totalRows / 20);
+                    $pageCount = ceil($totalRows / $postsPerPage);
+
+                    if ($pageCount > 1) {
+                      echo '<div class="pagination">';
+
+                      // Previous link
+                      if ($page > 0) {
+                        echo '<a href="manage-news.php?page=' . ($page - 1);
+                        if (isset($_GET['status'])) echo '&status=' . $_GET['status'];
+                        if (isset($_GET['search'])) echo '&search=' . $_GET['search'];
+                        echo '">Previous</a>';
+                      } else {
+                        echo '<a href="javascript:void(0)" disabled>Previous</a>';
+                      }
+
+                      // Page links - show limited numbers with ellipsis
+                      $maxPagesToShow = 5;
+                      $startPage = max(0, $page - floor($maxPagesToShow / 2));
+                      $endPage = min($pageCount - 1, $startPage + $maxPagesToShow - 1);
+
+                      if ($startPage > 0) {
+                        echo '<a href="manage-news.php?page=0';
+                        if (isset($_GET['status'])) echo '&status=' . $_GET['status'];
+                        if (isset($_GET['search'])) echo '&search=' . $_GET['search'];
+                        echo '">1</a>';
+                        if ($startPage > 1) echo '<span>...</span>';
+                      }
+
+                      for ($i = $startPage; $i <= $endPage; $i++) {
+                        echo '<a href="manage-news.php?page=' . $i;
+                        if (isset($_GET['status'])) echo '&status=' . $_GET['status'];
+                        if (isset($_GET['search'])) echo '&search=' . $_GET['search'];
+                        echo '"' . ($i == $page ? ' class="active"' : '') . '>' . ($i + 1) . '</a>';
+                      }
+
+                      if ($endPage < $pageCount - 1) {
+                        if ($endPage < $pageCount - 2) echo '<span>...</span>';
+                        echo '<a href="manage-news.php?page=' . ($pageCount - 1);
+                        if (isset($_GET['status'])) echo '&status=' . $_GET['status'];
+                        if (isset($_GET['search'])) echo '&search=' . $_GET['search'];
+                        echo '">' . $pageCount . '</a>';
+                      }
+
+                      // Next link
+                      if ($page < $pageCount - 1) {
+                        echo '<a href="manage-news.php?page=' . ($page + 1);
+                        if (isset($_GET['status'])) echo '&status=' . $_GET['status'];
+                        if (isset($_GET['search'])) echo '&search=' . $_GET['search'];
+                        echo '">Next</a>';
+                      } else {
+                        echo '<a href="javascript:void(0)" disabled>Next</a>';
+                      }
+
+                      echo '</div>';
+                    }
                     ?>
-                    <style type="text/css">
-                      a[disabled="disabled"] {
-                        pointer-events: none;
-                        opacity: 0.6;
-                      }
-
-                      .pagination {
-                        display: flex;
-                        justify-content: center;
-                        margin-top: 20px;
-                      }
-
-                      .pagination a {
-                        margin: 0 5px;
-                        padding: 5px 10px;
-                        border: 1px solid #ddd;
-                        border-radius: 4px;
-                      }
-
-                      .pagination a.active {
-                        background: #4b38b3;
-                        color: white;
-                        border-color: #4b38b3;
-                      }
-                    </style>
-                    <div class="pagination">
-                      <?php if ($page > 0): ?>
-                        <a href="manage-news.php?page=<?php echo $page - 1; ?><?php echo isset($_GET['status']) ? '&status=' . $_GET['status'] : ''; ?><?php echo isset($_GET['search']) ? '&search=' . $_GET['search'] : ''; ?>">Previous</a>
-                      <?php else: ?>
-                        <a href="javascript:void(0)" disabled="disabled">Previous</a>
-                      <?php endif; ?>
-
-                      <?php for ($i = 0; $i < $pageCount; $i++): ?>
-                        <a href="manage-news.php?page=<?php echo $i; ?><?php echo isset($_GET['status']) ? '&status=' . $_GET['status'] : ''; ?><?php echo isset($_GET['search']) ? '&search=' . $_GET['search'] : ''; ?>" class="<?php echo $page == $i ? 'active' : ''; ?>"><?php echo $i + 1; ?></a>
-                      <?php endfor; ?>
-
-                      <?php if ($page < $pageCount - 1): ?>
-                        <a href="manage-news.php?page=<?php echo $page + 1; ?><?php echo isset($_GET['status']) ? '&status=' . $_GET['status'] : ''; ?><?php echo isset($_GET['search']) ? '&search=' . $_GET['search'] : ''; ?>">Next</a>
-                      <?php else: ?>
-                        <a href="javascript:void(0)" disabled="disabled">Next</a>
-                      <?php endif; ?>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -383,17 +432,44 @@ if (isset($_GET['status']) && in_array($_GET['status'], [STATUS_ACTIVE, STATUS_D
   <script src="assets/pages/jquery.blog-add.init.js"></script>
   <script src="assets/js/jquery.core.js"></script>
   <script src="assets/js/jquery.app.js"></script>
+  <!-- SweetAlert2 JS -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
   <!-- AJAX Script for Status Update -->
   <script>
     $(document).ready(function() {
+      // SweetAlert toast notification
+      function showAlert(icon, title) {
+        const Toast = Swal.mixin({
+          toast: true,
+          position: 'top-end',
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true,
+          didOpen: (toast) => {
+            toast.addEventListener('mouseenter', Swal.stopTimer)
+            toast.addEventListener('mouseleave', Swal.resumeTimer)
+          }
+        });
+
+        Toast.fire({
+          icon: icon,
+          title: title
+        });
+      }
+
       $('.post-status').change(function() {
         var postId = $(this).data('post-id');
         var newStatus = $(this).val();
-        var row = $('#post-row-' + postId);
-        var selectElement = $(this); // Store reference to the select element
+        var selectElement = $(this);
+        var badge = $(this).siblings('.status-badge');
 
-        console.log('Changing status for post ID:', postId, 'to:', newStatus);
+        // Store old values for reverting if needed
+        var oldStatus = selectElement.val();
+        var oldStatusText = badge.text();
+        var oldStatusClass = badge.attr('class').replace('status-badge ', '');
+
+        selectElement.prop('disabled', true);
 
         $.ajax({
           url: 'update-post-status.php',
@@ -402,44 +478,44 @@ if (isset($_GET['status']) && in_array($_GET['status'], [STATUS_ACTIVE, STATUS_D
             post_id: postId,
             new_status: newStatus
           },
-          beforeSend: function() {
-            // Show loading state if needed
-            selectElement.prop('disabled', true);
-          },
           success: function(response) {
             selectElement.prop('disabled', false);
 
             if (response.success) {
-              // Show success message
-              $('<div class="alert alert-success">Status updated successfully!</div>')
-                .insertBefore('.table-responsive')
-                .delay(3000)
-                .fadeOut(function() {
-                  $(this).remove();
-                });
-            } else {
-              // Revert selection if update failed
-              selectElement.val(response.old_status);
+              // Update status badge
+              var statusText = '';
+              var statusClass = '';
 
-              $('<div class="alert alert-danger">Error: ' + response.message + '</div>')
-                .insertBefore('.table-responsive')
-                .delay(3000)
-                .fadeOut(function() {
-                  $(this).remove();
-                });
+              switch (parseInt(newStatus)) {
+                case <?php echo STATUS_ACTIVE; ?>:
+                  statusText = 'Active';
+                  statusClass = 'status-active';
+                  break;
+                case <?php echo STATUS_DRAFT; ?>:
+                  statusText = 'Draft';
+                  statusClass = 'status-draft';
+                  break;
+                case <?php echo STATUS_SCHEDULED; ?>:
+                  statusText = 'Scheduled';
+                  statusClass = 'status-scheduled';
+                  break;
+              }
+
+              badge.text(statusText)
+                .removeClass('status-active status-draft status-scheduled')
+                .addClass(statusClass);
+
+              showAlert('success', 'Status updated successfully!');
+            } else {
+              // Revert to old status
+              selectElement.val(oldStatus);
+              showAlert('error', response.message);
             }
           },
           error: function(xhr, status, error) {
             selectElement.prop('disabled', false);
-
-            // Show error message
-            $('<div class="alert alert-danger">Error updating status. Please try again.</div>')
-              .insertBefore('.table-responsive')
-              .delay(3000)
-              .fadeOut(function() {
-                $(this).remove();
-              });
-
+            selectElement.val(oldStatus);
+            showAlert('error', 'Error updating status. Please try again.');
             console.error('AJAX Error:', error);
           }
         });
