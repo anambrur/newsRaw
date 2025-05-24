@@ -423,6 +423,7 @@ $postsPerPage = 10;
           },
           success: function(response) {
             selectElement.prop('disabled', false);
+            console.log(response);
 
             if (response.success) {
               console.log('Status updated successfully!');
