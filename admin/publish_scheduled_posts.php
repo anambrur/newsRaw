@@ -17,9 +17,9 @@ try {
         AND Is_Active = 0"
     );
 
-    echo '<pre>';  // Added pre tag here
-    print_r($query);
-    echo '</pre>'; // Closing pre tag
+    echo '<pre>';
+    print_r($query->fetch_all(MYSQLI_ASSOC));   
+    echo '</pre>';
 
     if (!$query) {
         throw new Exception("Failed to fetch scheduled posts");
