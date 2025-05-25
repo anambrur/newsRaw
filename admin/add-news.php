@@ -110,8 +110,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
 
         // In your form processing section (around line 120)
 
-        $reporterName = null;
-        $reporter = null;
+        // $reporterName = null;
+        // $reporter = null;
 
         if (isset($_POST['useStaticReporter']) && $_POST['useStaticReporter'] === 'on') {
             // Using static reporter
