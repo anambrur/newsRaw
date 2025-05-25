@@ -222,9 +222,9 @@ if ($searchQuery != '') {
               </div>
             <?php } ?>
 
-            <!-- <div class="row m-b-20">
+            <div class="row m-b-20">
               <div class="col-lg-5">
-                <form method="GET" action="manage-posts.php" class="row">
+                <form method="GET" action="manage-news.php" class="row">
                   <div class="col-md-8">
                     <input type="text" class="form-control" name="search" placeholder="Search posts by title or category" value="<?php echo htmlspecialchars($searchQuery); ?>">
                   </div>
@@ -234,7 +234,7 @@ if ($searchQuery != '') {
                 </form>
               </div>
               <div class="col-lg-5">
-                <form method="GET" action="manage-posts.php" class="row">
+                <form method="GET" action="manage-news.php" class="row">
                   <div class="col-md-8">
                     <select name="status" class="form-control" onchange="this.form.submit()">
                       <option value="">All Statuses</option>
@@ -252,7 +252,7 @@ if ($searchQuery != '') {
                   </div>
                 </form>
               </div>
-            </div> -->
+            </div>
 
             <div class="table-responsive">
               <table class="table m-0 table-colored-bordered table-bordered-primary" id="myTableb">
