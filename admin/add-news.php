@@ -486,7 +486,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                                     <!-- Checkbox to toggle static reporter -->
                                     <div class="form-check mb-2">
                                         <input class="form-check-input" type="checkbox" id="useStaticReporter">
-                                        <label class="form-check-label" for="useStaticReporter">Use custom reporter name</label>
+                                        <p class="form-check-label" for="useStaticReporter">Use custom reporter name</p>
                                     </div>
 
                                     <!-- Select2 Dropdown (default) -->
