@@ -100,13 +100,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
         $posttitle = trim($_POST['posttitle']);
         $catid = intval($_POST['category']);
         $postdetails = trim($_POST['postdescription']);
-        $reporter = intval($_POST['reporter']);
+        // $reporter = intval($_POST['reporter']);
         $subtitle = trim($_POST['subtitle']);
         $source = trim($_POST['source']);
         $photocap = trim($_POST['photocap']);
         $seoshort = trim($_POST['seoshort']);
         $imageseo = trim($_POST['imageseo']);
         $seomkey = trim($_POST['seomkey']);
+
+        // In your form processing section
+        if (isset($_POST['useStaticReporter']) && $_POST['useStaticReporter'] === 'on') {
+            // Using static reporter
+            $reporterName = trim($_POST['static_reporter']);
+        } else {
+            // Using dropdown selection
+            $reporter = intval($_POST['reporter']);
+        }
 
         // Generate URL slug
         $arr = explode(" ", $posttitle);
@@ -135,7 +144,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
         }
 
         // Validate required fields
-        if (empty($posttitle) || empty($catid) || empty($postdetails) || empty($reporter)) {
+        if (empty($posttitle) || empty($catid) || empty($postdetails)) {
             $error = "Please fill all required fields.";
         } else {
             // Handle file upload
@@ -162,9 +171,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                         $con,
                         "INSERT INTO tblposts 
                         (PostTitle, CategoryId, PostDetails, PostUrl, Is_Active, On_Slider, 
-                         On_Sportlingt, On_Article, On_Gfeed, On_Save, PostImage, repoter, 
-                         source, subtitle, photocap, seoshort, imageseo, seomkey, PostingDate, UpdationDate, ScheduledPublish) 
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                         On_Sportlingt, On_Article, On_Gfeed, On_Save, PostImage, repoter,reporterName, source, subtitle, photocap, seoshort, imageseo, seomkey, PostingDate, UpdationDate, ScheduledPublish) 
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
                     );
 
                     mysqli_stmt_bind_param(
@@ -182,6 +190,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                         $On_Save,
                         $imgnewfile,
                         $reporter,
+                        $reporterName,
                         $source,
                         $subtitle,
                         $photocap,
@@ -256,6 +265,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
 
         .card {
             margin-bottom: 20px;
+        }
+
+        #staticReporterContainer {
+            margin-top: 10px;
+        }
+
+        .form-check {
+            margin-bottom: 10px;
         }
     </style>
 </head>
@@ -447,7 +464,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                                     </select>
                                 </div>
 
-                                <div class="form-group m-b-20">
+                                <!-- <div class="form-group m-b-20">
                                     <label>Reporter</label>
                                     <select class="form-control select2" name="reporter" id="reporter" required>
                                         <option value="">Select Reporter</option>
@@ -460,7 +477,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                                         }
                                         ?>
                                     </select>
+                                </div> -->
+
+
+                                <div class="form-group m-b-20">
+                                    <label>Reporter</label>
+
+                                    <!-- Checkbox to toggle static reporter -->
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="useStaticReporter">
+                                        <label class="form-check-label" for="useStaticReporter">Use custom reporter name</label>
+                                    </div>
+
+                                    <!-- Select2 Dropdown (default) -->
+                                    <div id="reporterDropdownContainer">
+                                        <select class="form-control select2" name="reporter" id="reporter" required>
+                                            <option value="">Select Reporter</option>
+                                            <?php
+                                            $rets = mysqli_query($con, "SELECT * FROM reporter WHERE deleted='false'");
+                                            while ($result = mysqli_fetch_array($rets)) {
+                                                $selected = ($result['reporterID'] == $reporter) ? 'selected' : '';
+                                                echo '<option value="' . htmlspecialchars($result['reporterID']) . '" ' . $selected . '>'
+                                                    . htmlspecialchars($result['name']) . '</option>';
+                                            }
+                                            ?>
+                                        </select>
+                                    </div>
+
+                                    <!-- Static Reporter Input (hidden by default) -->
+                                    <div id="staticReporterContainer" style="display: none;">
+                                        <input type="text" class="form-control" id="staticReporter" name="static_reporter"
+                                            placeholder="Enter reporter name">
+                                        <input type="hidden" name="reporter" id="hiddenReporterField" value="">
+                                    </div>
                                 </div>
+
+
+
 
                                 <div class="form-group m-b-20">
                                     <label>Schedule Post</label>
@@ -535,6 +588,48 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
             $('.select2').select2({
                 placeholder: "Select Reporter",
                 allowClear: true
+            });
+
+
+            // Toggle between dropdown and static reporter
+            $('#useStaticReporter').change(function() {
+                if ($(this).is(':checked')) {
+                    // Hide dropdown and show static input
+                    $('#reporterDropdownContainer').hide();
+                    $('#staticReporterContainer').show();
+
+                    // Remove required attribute from dropdown
+                    $('#reporter').removeAttr('required');
+
+                    // Clear any existing selection
+                    $('#reporter').val(null).trigger('change');
+                } else {
+                    // Show dropdown and hide static input
+                    $('#reporterDropdownContainer').show();
+                    $('#staticReporterContainer').hide();
+
+                    // Add required attribute back
+                    $('#reporter').attr('required', 'required');
+
+                    // Clear static reporter input
+                    $('#staticReporter').val('');
+                }
+            });
+
+            // When form submits, handle the reporter value appropriately
+            $('form[name="addpost"]').submit(function(e) {
+                if ($('#useStaticReporter').is(':checked')) {
+                    // If using static reporter, set the hidden field value
+                    $('#hiddenReporterField').val($('#staticReporter').val());
+
+                    // You might want to validate that a name was entered
+                    if ($('#staticReporter').val().trim() === '') {
+                        alert('Please enter a reporter name');
+                        e.preventDefault();
+                        return false;
+                    }
+                }
+                return true;
             });
         });
     </script>
