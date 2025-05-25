@@ -108,13 +108,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
         $imageseo = trim($_POST['imageseo']);
         $seomkey = trim($_POST['seomkey']);
 
-        // In your form processing section
+        // In your form processing section (around line 120)
         if (isset($_POST['useStaticReporter']) && $_POST['useStaticReporter'] === 'on') {
             // Using static reporter
             $reporterName = trim($_POST['static_reporter']);
+            $reporter = null;
         } else {
             // Using dropdown selection
             $reporter = intval($_POST['reporter']);
+            $reporterName = null;
         }
 
         // Generate URL slug
@@ -464,29 +466,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                                     </select>
                                 </div>
 
-                                <!-- <div class="form-group m-b-20">
-                                    <label>Reporter</label>
-                                    <select class="form-control select2" name="reporter" id="reporter" required>
-                                        <option value="">Select Reporter</option>
-                                        <?php
-                                        $rets = mysqli_query($con, "SELECT * FROM reporter WHERE deleted='false'");
-                                        while ($result = mysqli_fetch_array($rets)) {
-                                            $selected = ($result['reporterID'] == $reporter) ? 'selected' : '';
-                                            echo '<option value="' . htmlspecialchars($result['reporterID']) . '" ' . $selected . '>'
-                                                . htmlspecialchars($result['name']) . '</option>';
-                                        }
-                                        ?>
-                                    </select>
-                                </div> -->
-
-
                                 <div class="form-group m-b-20">
                                     <label>Reporter</label>
 
                                     <!-- Checkbox to toggle static reporter -->
                                     <div class="form-check mb-2">
-                                        <input class="form-check-input" type="checkbox" id="useStaticReporter">
-                                        <p class="form-check-label" for="useStaticReporter">Use custom reporter name</p>
+                                        <input class="form-check-input" type="checkbox" id="useStaticReporter" name="useStaticReporter">
+                                        <label class="form-check-label" for="useStaticReporter">Use custom reporter name</label>
                                     </div>
 
                                     <!-- Select2 Dropdown (default) -->
@@ -589,6 +575,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                 placeholder: "Select Reporter",
                 allowClear: true
             });
+
+            
+            <?php if (isset($_POST['useStaticReporter']) && $_POST['useStaticReporter'] === 'on'): ?>
+                $('#useStaticReporter').prop('checked', true).trigger('change');
+            <?php endif; ?>
 
 
             // Toggle between dropdown and static reporter
