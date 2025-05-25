@@ -213,7 +213,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
 
                     mysqli_stmt_bind_param(
                         $insertQuery,
-                        'sisssiiiiisisssssssss',
+                        'sisssiiiiisissssssssss',
                         $posttitle,
                         $catid,
                         $postdetails,
