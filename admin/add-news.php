@@ -116,16 +116,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
         if (isset($_POST['useStaticReporter']) && $_POST['useStaticReporter'] === 'on') {
             // Using static reporter
             $reporterName = trim($_POST['static_reporter']);
+            if (empty($reporterName)) {
+                $error = "Please enter a reporter name";
+            }
         } else {
             // Using dropdown selection
             $reporter = isset($_POST['reporter']) ? intval($_POST['reporter']) : null;
-        }
-
-        // Validate reporter selection
-        if ($reporter === null && empty($reporterName)) {
-            $error = "Please select a reporter or enter a custom reporter name";
-        } else if ($reporter === 0) {
-            $error = "Please select a valid reporter from the dropdown";
+            if ($reporter === null || $reporter === 0) {
+                $error = "Please select a valid reporter from the dropdown";
+            }
         }
 
         // Generate URL slug
@@ -645,12 +644,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
             // When form submits, handle the reporter value appropriately
             $('form[name="addpost"]').submit(function(e) {
                 if ($('#useStaticReporter').is(':checked')) {
-                    // If using static reporter, set the hidden field value
-                    $('#hiddenReporterField').val($('#staticReporter').val());
+                    // If using static reporter, clear the dropdown value
+                    $('#reporter').val('').removeAttr('required');
 
-                    // You might want to validate that a name was entered
+                    // Validate that a name was entered
                     if ($('#staticReporter').val().trim() === '') {
                         alert('Please enter a reporter name');
+                        e.preventDefault();
+                        return false;
+                    }
+                } else {
+                    // Validate dropdown selection
+                    if ($('#reporter').val() === '' || $('#reporter').val() === '0') {
+                        alert('Please select a reporter from the dropdown');
                         e.preventDefault();
                         return false;
                     }
