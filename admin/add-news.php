@@ -100,13 +100,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
         $posttitle = trim($_POST['posttitle']);
         $catid = intval($_POST['category']);
         $postdetails = trim($_POST['postdescription']);
-        // $reporter = intval($_POST['reporter']);
+        $reporter = intval($_POST['reporter']);
         $subtitle = trim($_POST['subtitle']);
         $source = trim($_POST['source']);
         $photocap = trim($_POST['photocap']);
         $seoshort = trim($_POST['seoshort']);
         $imageseo = trim($_POST['imageseo']);
         $seomkey = trim($_POST['seomkey']);
+
+        echo $reporter;
+        echo $reporterName;
+        exit;
 
         // In your form processing section (around line 120)
 
@@ -129,9 +133,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
             $error = "Please select a valid reporter from the dropdown";
         }
 
-        echo $reporter;
-        echo $reporterName;
-        exit;
+
 
         // Generate URL slug
         $arr = explode(" ", $posttitle);
@@ -159,7 +161,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
             $status = 1; // Default to published
         }
 
-        
+
 
         // Validate required fields
         if (empty($posttitle) || empty($catid) || empty($postdetails)) {
