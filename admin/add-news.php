@@ -5,7 +5,7 @@ include('includes/resizeLib.php');
 
 // Error reporting configuration
 error_reporting(E_ALL);
-ini_set('display_errors', 0);
+ini_set('display_errors', 1);
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/php_errors.log');
 
@@ -109,14 +109,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
         $seomkey = trim($_POST['seomkey']);
 
         // In your form processing section (around line 120)
+
+        $reporterName = null;
+        $reporter = null;
+
         if (isset($_POST['useStaticReporter']) && $_POST['useStaticReporter'] === 'on') {
             // Using static reporter
             $reporterName = trim($_POST['static_reporter']);
-            $reporter = null;
         } else {
             // Using dropdown selection
             $reporter = intval($_POST['reporter']);
-            $reporterName = null;
         }
 
         // Generate URL slug
@@ -162,6 +164,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                 // Check if post title already exists
                 $checkQuery = mysqli_prepare($con, "SELECT id FROM tblposts WHERE PostTitle = ?");
                 mysqli_stmt_bind_param($checkQuery, 's', $posttitle);
+                error_log("DEBUG: Preparing to execute query with params: " . print_r([
+                    $posttitle,
+                    $catid,
+                    $postdetails,
+                    $url,
+                    $status,
+                    $On_Slider,
+                    $On_Sportlingt,
+                    $On_Article,
+                    $On_Gfeed,
+                    $On_Save,
+                    $imgnewfile,
+                    $reporter,
+                    $reporterName,
+                    $source,
+                    $subtitle,
+                    $photocap,
+                    $seoshort,
+                    $imageseo,
+                    $seomkey,
+                    $date,
+                    $date,
+                    $scheduledPublish
+                ], true));
                 mysqli_stmt_execute($checkQuery);
                 mysqli_stmt_store_result($checkQuery);
 
@@ -576,7 +602,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                 allowClear: true
             });
 
-            
+
             <?php if (isset($_POST['useStaticReporter']) && $_POST['useStaticReporter'] === 'on'): ?>
                 $('#useStaticReporter').prop('checked', true).trigger('change');
             <?php endif; ?>
