@@ -516,8 +516,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                                             <?php
                                             $rets = mysqli_query($con, "SELECT * FROM reporter WHERE deleted='false'");
                                             while ($result = mysqli_fetch_array($rets)) {
-                                                $selected = ($result['reporterID'] == $reporter) ? 'selected' : '';
-                                                echo '<option value="' . htmlspecialchars($result['reporterID']) . '" ' . $selected . '>'
+                                                echo '<option value="' . htmlspecialchars($result['reporterID']) . '">'
                                                     . htmlspecialchars($result['name']) . '</option>';
                                             }
                                             ?>
@@ -528,7 +527,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                                     <div id="staticReporterContainer" style="display: none;">
                                         <input type="text" class="form-control" id="staticReporter" name="static_reporter"
                                             placeholder="Enter reporter name">
-                                        <input type="hidden" name="reporter" id="hiddenReporterField" value="">
                                     </div>
                                 </div>
 
@@ -611,11 +609,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
             });
 
 
-            <?php if (isset($_POST['useStaticReporter']) && $_POST['useStaticReporter'] === 'on'): ?>
-                $('#useStaticReporter').prop('checked', true).trigger('change');
-            <?php endif; ?>
-
-
             // Toggle between dropdown and static reporter
             $('#useStaticReporter').change(function() {
                 if ($(this).is(':checked')) {
@@ -623,11 +616,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                     $('#reporterDropdownContainer').hide();
                     $('#staticReporterContainer').show();
 
-                    // Remove required attribute from dropdown
-                    $('#reporter').removeAttr('required');
-
-                    // Clear any existing selection
-                    $('#reporter').val(null).trigger('change');
+                    // Remove required attribute from dropdown and clear selection
+                    $('#reporter').val('').removeAttr('required');
                 } else {
                     // Show dropdown and hide static input
                     $('#reporterDropdownContainer').show();
@@ -641,13 +631,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                 }
             });
 
-            // When form submits, handle the reporter value appropriately
+            // Form submission handler
             $('form[name="addpost"]').submit(function(e) {
                 if ($('#useStaticReporter').is(':checked')) {
-                    // If using static reporter, clear the dropdown value
-                    $('#reporter').val('').removeAttr('required');
+                    // Clear the dropdown value completely
+                    $('#reporter').val('');
 
-                    // Validate that a name was entered
+                    // Validate custom name
                     if ($('#staticReporter').val().trim() === '') {
                         alert('Please enter a reporter name');
                         e.preventDefault();
