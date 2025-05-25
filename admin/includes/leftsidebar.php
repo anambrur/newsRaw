@@ -11,22 +11,17 @@
           <a href="dashboard.php" class="pc-link"><span class="pc-micon"> <i class="ph ph-gauge"></i></span><span class="pc-mtext">Dashboard</span></a>
         </li>
 
-
-
-
-
         <li class="pc-item pc-caption">
           <label>News Department</label>
           <i class="ph ph-compass-tool"></i>
         </li>
-
-
 
         <li class="pc-item pc-hasmenu">
           <a href="#!" class="pc-link"><span class="pc-micon"> <i class="ph ph-tree-structure"></i> </span><span class="pc-mtext">News Room</span><span class="pc-arrow"><i data-feather="chevron-right"></i></span></a>
           <ul class="pc-submenu">
             <li class="pc-item"><a class="pc-link" href="add-news.php">Add News</a></li>
             <li class="pc-item"><a class="pc-link" href="manage-news.php">Manage News</a></li>
+            <li class="pc-item"><a class="pc-link" href="draft-posts.php">Draft Posts</a></li>
             <li class="pc-item"><a class="pc-link" href="recyclebin.php">Recycle Bin</a></li>
             <li class="pc-item"><a class="pc-link" href="add-category.php">Add Category</a></li>
             <li class="pc-item"><a class="pc-link" href="manage-categories.php">Manage Category</a></li>
