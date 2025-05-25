@@ -122,6 +122,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
             $reporter = intval($_POST['reporter']);
         }
 
+        // Add this validation before the database insert
+        if ($reporter === null && empty($reporterName)) {
+            $error = "Please select a reporter or enter a custom reporter name";
+        } else if ($reporter === 0 && empty($reporterName)) {
+            $error = "Please select a valid reporter from the dropdown";
+        }
+
+        echo $reporter;
+        echo $reporterName;
+        exit;
+
         // Generate URL slug
         $arr = explode(" ", $posttitle);
         $url = implode("-", $arr);
@@ -148,12 +159,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
             $status = 1; // Default to published
         }
 
-        // Add this validation before the database insert
-        if ($reporter === null && empty($reporterName)) {
-            $error = "Please select a reporter or enter a custom reporter name";
-        } else if ($reporter === 0 && empty($reporterName)) {
-            $error = "Please select a valid reporter from the dropdown";
-        }
+        
 
         // Validate required fields
         if (empty($posttitle) || empty($catid) || empty($postdetails)) {
