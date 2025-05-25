@@ -110,8 +110,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
 
         // In your form processing section (around line 120)
 
-        // $reporterName = null;
-        // $reporter = null;
+        // Initialize both variables at the start
+        $reporter = null;
+        $reporterName = null;
 
         if (isset($_POST['useStaticReporter']) && $_POST['useStaticReporter'] === 'on') {
             // Using static reporter
@@ -145,6 +146,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
             $status = (strtotime($scheduledPublish) <= time()) ? 1 : 3;
         } else {
             $status = 1; // Default to published
+        }
+
+        // Add this validation before the database insert
+        if ($reporter === null && empty($reporterName)) {
+            $error = "Please select a reporter or enter a custom reporter name";
+        } else if ($reporter === 0 && empty($reporterName)) {
+            $error = "Please select a valid reporter from the dropdown";
         }
 
         // Validate required fields
@@ -205,7 +213,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
 
                     mysqli_stmt_bind_param(
                         $insertQuery,
-                        'sisssiiiiisissssssssss',
+                        'sisssiiiiisisssssssss',
                         $posttitle,
                         $catid,
                         $postdetails,
