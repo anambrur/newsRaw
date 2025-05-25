@@ -161,7 +161,7 @@ currently supported by Chrome and Opera */
                          <!-- Local Ad Post Top End -->
                          <?php
                          $pid = intval($_GET['nid']);
-                         $query = mysqli_query($con, "SELECT tblposts.PostTitle AS posttitle, tblposts.subtitle AS subtitle, tblposts.PostImage, photocap AS photocap, tblcategory.CategoryName AS category,tblcategory.id AS cid,tblsubcategory.Subcategory AS subcategory,tblposts.PostDetails AS postdetails,tblposts.PostingDate AS postingdate,tblposts.PostUrl AS url,reporter.name as reporter_name,reporter.photo as reporter_photo, tblposts.source FROM tblposts left join tblcategory ON tblcategory.id=tblposts.CategoryId left join  tblsubcategory ON  tblsubcategory.SubCategoryId=tblposts.SubCategoryId left join reporter ON tblposts.repoter=reporter.reporterID where tblposts.id='$pid'");
+                         $query = mysqli_query($con, "SELECT tblposts.PostTitle AS posttitle, tblposts.subtitle AS subtitle,tblposts.reporterName AS staticReporterName,  tblposts.PostImage, photocap AS photocap, tblcategory.CategoryName AS category,tblcategory.id AS cid,tblsubcategory.Subcategory AS subcategory,tblposts.PostDetails AS postdetails,tblposts.PostingDate AS postingdate,tblposts.PostUrl AS url,reporter.name as reporter_name,reporter.photo as reporter_photo, tblposts.source FROM tblposts left join tblcategory ON tblcategory.id=tblposts.CategoryId left join  tblsubcategory ON  tblsubcategory.SubCategoryId=tblposts.SubCategoryId left join reporter ON tblposts.repoter=reporter.reporterID where tblposts.id='$pid'");
                          while ($row = mysqli_fetch_array($query)) {
                          ?>
                               <div class="DDetailsTitle">
@@ -178,7 +178,14 @@ currently supported by Chrome and Opera */
                                              <div class="DescTitle">
                                                   <span class="ColorBox"></span>
                                                   <h2>
-                                                       <?php echo htmlentities($row['reporter_name']); ?>
+                                                       <?php
+                                                       if ($row['staticReporterName'] == null || $row['staticReporterName'] == '') {
+                                                            echo htmlentities($row['reporter_name']);
+                                                       } else {
+                                                            echo htmlentities($row['staticReporterName']);
+                                                       }
+                                                       ?>
+
                                                   </h2>
                                              </div>
                                              <div class="pDate">
