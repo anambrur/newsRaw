@@ -100,7 +100,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
         $posttitle = trim($_POST['posttitle']);
         $catid = intval($_POST['category']);
         $postdetails = trim($_POST['postdescription']);
-        $reporter = intval($_POST['reporter']);
+        // $reporter = intval($_POST['reporter']);
         $subtitle = trim($_POST['subtitle']);
         $source = trim($_POST['source']);
         $photocap = trim($_POST['photocap']);
@@ -108,13 +108,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
         $imageseo = trim($_POST['imageseo']);
         $seomkey = trim($_POST['seomkey']);
 
-        echo $reporter;
-        echo $reporterName;
-        exit;
 
-        // In your form processing section (around line 120)
-
-        // Initialize both variables at the start
+        // Initialize reporter variables
         $reporter = null;
         $reporterName = null;
 
@@ -123,17 +118,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
             $reporterName = trim($_POST['static_reporter']);
         } else {
             // Using dropdown selection
-            $reporter = intval($_POST['reporter']);
+            $reporter = isset($_POST['reporter']) ? intval($_POST['reporter']) : null;
         }
 
-        // Add this validation before the database insert
+        // Validate reporter selection
         if ($reporter === null && empty($reporterName)) {
             $error = "Please select a reporter or enter a custom reporter name";
-        } else if ($reporter === 0 && empty($reporterName)) {
+        } else if ($reporter === 0) {
             $error = "Please select a valid reporter from the dropdown";
         }
-
-
 
         // Generate URL slug
         $arr = explode(" ", $posttitle);
