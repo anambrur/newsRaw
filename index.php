@@ -60,9 +60,9 @@ require_once "functions/limit.php"; ?>
 
 <body style="background: #ffffff;">
     <?php require 'includes/header.php'; ?>
-    <div style="background: #ffffff;">
+    <!-- <div style="background: #ffffff;">
         <?php require_once 'sections/litenews.php'; ?>
-    </div>
+    </div> -->
     <?php require_once 'parts/footer.php'; ?>
     <?php require_once 'parts/scripts.php'; ?>
 </body>

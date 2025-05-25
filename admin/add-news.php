@@ -531,8 +531,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                                 </div>
 
 
-
-
                                 <div class="form-group m-b-20">
                                     <label>Schedule Post</label>
                                     <p>(Leave empty for immediate publishing)</p>
