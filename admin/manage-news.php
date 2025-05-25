@@ -247,7 +247,7 @@ if ($searchQuery != '') {
 
                   <div class="col-md-4">
                     <?php if (isset($_GET['search']) || isset($_GET['status'])) { ?>
-                      <a href="manage-posts.php" class="btn btn-secondary">Reset</a>
+                      <a href="manage-news.php" class="btn btn-secondary">Reset</a>
                     <?php } ?>
                   </div>
                 </form>
