@@ -449,7 +449,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
 
                                 <div class="form-group m-b-20">
                                     <label>Reporter</label>
-                                    <select class="form-control" name="reporter" id="reporter" required>
+                                    <select class="form-control select2" name="reporter" id="reporter" required>
                                         <option value="">Select Reporter</option>
                                         <?php
                                         $rets = mysqli_query($con, "SELECT * FROM reporter WHERE deleted='false'");
@@ -528,6 +528,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                     ['view', ['fullscreen', 'codeview']],
                     ['help', ['help']]
                 ]
+            });
+
+
+            // Initialize Select2
+            $('.select2').select2({
+                placeholder: "Select Reporter",
+                allowClear: true
             });
         });
     </script>
