@@ -20,27 +20,6 @@ if (strlen($_SESSION['login']) == 0) {
         $seomkey = $_POST['seomkey'];
         $photocap = $_POST['photocap'];
         $postingdate = $_POST['PostingDate'];
-
-
-        // Initialize reporter variables
-        $reporter = null;
-        $reporterName = null;
-
-        if (isset($_POST['useStaticReporter']) && $_POST['useStaticReporter'] === 'on') {
-            // Using static reporter
-            $reporterName = trim($_POST['static_reporter']);
-        } else {
-            // Using dropdown selection
-            $reporter = isset($_POST['reporter']) ? intval($_POST['reporter']) : null;
-        }
-
-        // Scheduled publish time
-        $scheduledPublish = null;
-        if (!empty($_POST['scheduled_publish'])) {
-            $scheduledPublish = date('Y-m-d H:i:s', strtotime($_POST['scheduled_publish']));
-        }
-
-
         $arr = explode(" ", $posttitle);
         $url = implode("-", $arr);
         $status = 1;
@@ -88,27 +67,24 @@ if (strlen($_SESSION['login']) == 0) {
             $error = "Post title already exists. Please choose a different one.";
         } else {
             $query = mysqli_query($con, "UPDATE tblposts SET 
-        PostTitle='$posttitle',
-        CategoryId='$catid',
-        PostDetails='$postdetails',
-        UpdationDate='$postingdate',
-        PostUrl='$url',
-        Is_Active='$status',
-        On_Sportlingt='$On_Sportlingt',
-        On_Slider='$On_Slider',
-        On_Article='$On_Article',
-        On_Gfeed='$On_Gfeed',
-        On_Save='$On_Save',
-        repoter=" . ($reporter !== null ? $reporter : 'NULL') . ",
-        reporterName=" . ($reporterName !== null ? "'$reporterName'" : 'NULL') . ",
-        source='$source',
-        subtitle='$subtitle',
-        photocap='$photocap',
-        seoshort='$seoshort',
-        imageseo='$imageseo',
-        seomkey='$seomkey',
-        ScheduledPublish=" . ($scheduledPublish !== null ? "'$scheduledPublish'" : 'NULL') . "
-        WHERE id='$postid'");
+            PostTitle='$posttitle',
+            CategoryId='$catid',
+            PostDetails='$postdetails',
+            UpdationDate='$postingdate',
+            PostUrl='$url',
+            Is_Active='$status',
+            On_Sportlingt='$On_Sportlingt',
+            On_Slider='$On_Slider',
+            On_Article='$On_Article',
+            On_Gfeed='$On_Gfeed',
+            On_Save='$On_Save',
+            repoter=$repoter,
+            source='$source',
+            subtitle='$subtitle',
+            photocap='$photocap',
+            seoshort='$seoshort',
+            imageseo='$imageseo',
+            seomkey='$seomkey' WHERE id='$postid'");
             if ($query) {
                 $msg = "Post updated ";
 
@@ -173,8 +149,8 @@ if (strlen($_SESSION['login']) == 0) {
         <link href="../plugins/summernote/summernote.css" rel="stylesheet" />
         <link href="../plugins/jquery.filer/css/jquery.filer.css" rel="stylesheet" />
         <link href="../plugins/jquery.filer/css/themes/jquery.filer-dragdropbox-theme.css" rel="stylesheet" />
-        <link href="../plugins/select2/css/select2.min.css" rel="stylesheet" type="text/css"/>
-        <!-- App css -->
+        <link href="../plugins/select2/css/select2.min.css" rel="stylesheet" type="text/css"
+            <!-- App css -->
         <link href="assets/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
         <link rel="stylesheet" href="../plugins/switchery/switchery.min.css">
         <!-- Old Admin Head Code Start -->
@@ -198,8 +174,22 @@ if (strlen($_SESSION['login']) == 0) {
         <!-- [ Sidebar Menu ] end -->
         <!-- [ Header Topbar ] start -->
         <?php include('includes/topheader.php'); ?>
+        <!-- [ Header ] end -->
+
+
+
+
+        <!-- ============================================================== -->
+        <!-- Start right Content here -->
+        <!-- ============================================================== -->
+
+        <!-- Start content -->
+
+
+        <!-- [ Main Content ] start -->
         <div class="pc-container">
             <div class="pc-content" style="padding-top: 1px;background-color: #f3f3f3;">
+
 
                 <!-- [ breadcrumb ] start -->
                 <div class="page-header">
@@ -224,10 +214,15 @@ if (strlen($_SESSION['login']) == 0) {
                 </div>
                 <!-- [ breadcrumb ] end -->
 
+
+
+
+
                 <!-- [ Add Post Option ] Start -->
                 <div class="page-header">
                     <div class="page-block card mb-0">
                         <div class="card-body">
+
 
                             <div class="row">
                                 <div class="col-sm-6">
@@ -402,43 +397,22 @@ if (strlen($_SESSION['login']) == 0) {
                                         </div>
 
                                         <div class="form-group m-b-20">
-                                            <label>Reporter</label>
+                                            <label for="exampleInputEmail1">Reporter</label>
+                                            <select class="form-control" name="reporter" id="category" required>
+                                                <option value="">Select Reporter </option>
+                                                <?php
 
-                                            <!-- Checkbox to toggle static reporter -->
-                                            <div class="form-check mb-2">
-                                                <input class="form-check-input" type="checkbox" id="useStaticReporter" name="useStaticReporter" <?php echo !empty($row['reporterName']) ? 'checked' : ''; ?>>
-                                                <label class="form-check-label" for="useStaticReporter">Use custom reporter name</label>
-                                            </div>
+                                                $rets = mysqli_query($con, "select * from  reporter where deleted='false'");
+                                                while ($result = mysqli_fetch_array($rets)) {
+                                                ?>
+                                                    <option value="<?php echo htmlentities($result['reporterID']); ?>" <?php if ($row['repoter'] == $result['reporterID']) {
+                                                                                                                            echo "selected";
+                                                                                                                        } ?>><?php echo htmlentities($result['name']); ?></option>
+                                                <?php } ?>
 
-                                            <!-- Select2 Dropdown (default) -->
-                                            <div id="reporterDropdownContainer" <?php echo !empty($row['reporterName']) ? 'style="display:none;"' : ''; ?>>
-                                                <select class="form-control select2" name="reporter" id="reporter">
-                                                    <option value="">Select Reporter</option>
-                                                    <?php
-                                                    $rets = mysqli_query($con, "select * from reporter where deleted='false'");
-                                                    while ($result = mysqli_fetch_array($rets)) {
-                                                        $selected = ($row['repoter'] == $result['reporterID']) ? 'selected' : '';
-                                                        echo '<option value="' . htmlentities($result['reporterID']) . '" ' . $selected . '>'
-                                                            . htmlentities($result['name']) . '</option>';
-                                                    }
-                                                    ?>
-                                                </select>
-                                            </div>
-
-                                            <!-- Static Reporter Input -->
-                                            <div id="staticReporterContainer" <?php echo empty($row['reporterName']) ? 'style="display:none;"' : ''; ?>>
-                                                <input type="text" class="form-control" id="staticReporter" name="static_reporter"
-                                                    placeholder="Enter reporter name" value="<?php echo !empty($row['reporterName']) ? htmlentities($row['reporterName']) : ''; ?>">
-                                            </div>
+                                            </select>
                                         </div>
 
-
-                                        <div class="form-group m-b-20">
-                                            <label>Schedule Post</label>
-                                            <p>(Leave empty to keep current publish time)</p>
-                                            <input type="datetime-local" class="form-control" id="scheduled_publish" name="scheduled_publish"
-                                                value="<?php echo !empty($row['ScheduledPublish']) ? date('Y-m-d\TH:i', strtotime($row['ScheduledPublish'])) : ''; ?>">
-                                        </div>
 
                                         <div class="form-group m-b-20">
                                             <label for="exampleInputEmail1">SEO Post Short Details</label>
@@ -457,45 +431,74 @@ if (strlen($_SESSION['login']) == 0) {
 
                                     <?php } ?>
                                     <button type="submit" name="update" class="btn btn-success waves-effect waves-light"> Update Post </button>
+
                                     </div>
                                 </div>
+
+
+
+
                         </div>
                     </div>
                 </div>
+                <!-- [ Add Post Option ] End -->
+
+
+                <!-- [ Main Content ] start -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                <!-- [ Main Content ] end -->
             </div>
         </div>
         <!-- [ Main Content ] end -->
+
+
+
         <?php include('includes/footer.php'); ?>
 
         </div>
 
+
+        <!-- ============================================================== -->
+        <!-- End Right content here -->
+        <!-- ============================================================== -->
+
+
         </div>
+        <!-- END wrapper -->
 
 
-        <script>
-            $(document).ready(function() {
-                // Toggle between dropdown and static reporter
-                $('#useStaticReporter').change(function() {
-                    if ($(this).is(':checked')) {
-                        $('#reporterDropdownContainer').hide();
-                        $('#staticReporterContainer').show();
-                        $('#reporter').val('').removeAttr('required');
-                    } else {
-                        $('#reporterDropdownContainer').show();
-                        $('#staticReporterContainer').hide();
-                        $('#reporter').attr('required', 'required');
-                        $('#staticReporter').val('');
-                    }
-                });
 
-                // Initialize based on current state
-                if ($('#useStaticReporter').is(':checked')) {
-                    $('#reporterDropdownContainer').hide();
-                    $('#staticReporterContainer').show();
-                    $('#reporter').val('').removeAttr('required');
-                }
-            });
-        </script>
+
+
+
+
 
     </body>
 
