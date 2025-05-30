@@ -325,6 +325,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
         .form-check {
             margin-bottom: 10px;
         }
+
+        /* Auto-save notification */
+        .alert.alert-info,
+        .alert.alert-danger {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Save status indicator */
+        #save-status {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            z-index: 9999;
+            background: white;
+            padding: 5px 10px;
+            border-radius: 3px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            font-size: 13px;
+        }
     </style>
 </head>
 
