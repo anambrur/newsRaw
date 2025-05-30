@@ -227,15 +227,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                     if ($postId > 0 && $status == 2) {
                         // Update existing draft
                         $query = "UPDATE tblposts SET 
-                            PostTitle = ?, 
-                            CategoryId = ?, 
-                            PostDetails = ?, 
-                            PostUrl = ?, 
-                            On_Slider = ?, 
-                            On_Sportlingt = ?, 
-                            On_Article = ?, 
-                            On_Gfeed = ?, 
-                            On_Save = ?, ";
+        PostTitle = ?, 
+        CategoryId = ?, 
+        PostDetails = ?, 
+        PostUrl = ?, 
+        On_Slider = ?, 
+        On_Sportlingt = ?, 
+        On_Article = ?, 
+        On_Gfeed = ?, 
+        On_Save = ?, ";
 
                         // Add PostImage to query if new file was uploaded
                         if ($imgnewfile) {
@@ -243,84 +243,101 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                         }
 
                         $query .= "repoter = ?, 
-                            reporterName = ?, 
-                            source = ?, 
-                            subtitle = ?, 
-                            photocap = ?, 
-                            seoshort = ?, 
-                            imageseo = ?, 
-                            seomkey = ?, 
-                            UpdationDate = ?, 
-                            ScheduledPublish = ?,
-                            IsAutosave = ?
-                        WHERE id = ?";
+        reporterName = ?, 
+        source = ?, 
+        subtitle = ?, 
+        photocap = ?, 
+        seoshort = ?, 
+        imageseo = ?, 
+        seomkey = ?, 
+        UpdationDate = ?, 
+        ScheduledPublish = ?,
+        IsAutosave = ?
+    WHERE id = ?";
 
                         $updateQuery = mysqli_prepare($con, $query);
 
                         // Prepare parameters
                         $params = [
-                            $posttitle,
-                            $catid,
-                            $postdetails,
-                            $url,
-                            $On_Slider,
-                            $On_Sportlingt,
-                            $On_Article,
-                            $On_Gfeed,
-                            $On_Save
+                            $posttitle,        // s
+                            $catid,            // i
+                            $postdetails,      // s
+                            $url,              // s
+                            $On_Slider,        // i
+                            $On_Sportlingt,    // i
+                            $On_Article,       // i
+                            $On_Gfeed,         // i
+                            $On_Save           // i
                         ];
 
                         // Add image if exists
                         if ($imgnewfile) {
-                            $params[] = $imgnewfile;
+                            $params[] = $imgnewfile;  // s
                         }
 
                         // Add remaining parameters
                         $params = array_merge($params, [
-                            $reporter,
-                            $reporterName,
-                            $source,
-                            $subtitle,
-                            $photocap,
-                            $seoshort,
-                            $imageseo,
-                            $seomkey,
-                            $date,
-                            $scheduledPublish,
-                            $isAutosave,
-                            $postId
+                            $reporter,         // i
+                            $reporterName,     // s
+                            $source,           // s
+                            $subtitle,         // s
+                            $photocap,         // s
+                            $seoshort,         // s
+                            $imageseo,         // s
+                            $seomkey,          // s
+                            $date,             // s
+                            $scheduledPublish, // s
+                            $isAutosave,       // i
+                            $postId            // i
                         ]);
 
                         // Create type string
-                        $types = 'sisssiiii';
+                        $types = 'sisssiiii'; // 9 parameters (5 strings, 4 integers)
+
                         if ($imgnewfile) {
-                            $types .= 's';
+                            $types .= 's';    // +1 string for image
                         }
-                        $types .= 'isssssssssi';
 
-                        mysqli_stmt_bind_param($updateQuery, $types, ...$params);
+                        // Add types for remaining parameters
+                        // repoter(i), reporterName(s), source(s), subtitle(s), photocap(s), 
+                        // seoshort(s), imageseo(s), seomkey(s), UpdationDate(s), ScheduledPublish(s), 
+                        // IsAutosave(i), id(i)
+                        $types .= 'isssssssssii'; // 12 more parameters (8 strings, 4 integers)
 
-                        if (mysqli_stmt_execute($updateQuery)) {
-                            $msg = "Draft updated successfully";
-                            error_log("Draft updated. ID: " . $postId);
+                        // Debug output to verify counts match
+                        error_log("Type string: " . $types);
+                        error_log("Type string length: " . strlen($types));
+                        error_log("Params count: " . count($params));
+                        error_log("Params: " . print_r($params, true));
 
-                            // Create thumbnail if new image was uploaded
-                            if ($imgnewfile) {
-                                try {
-                                    $resizeObj = new resize("images/postimages/" . $imgnewfile);
-                                    $resizeObj->resizeImage(300, 200, 'exact');
-                                    $resizeObj->saveImage("images/thumb/" . $imgnewfile, 100);
-                                } catch (Exception $e) {
-                                    error_log("Thumbnail creation failed: " . $e->getMessage());
-                                }
-                            }
+                        if (strlen($types) !== count($params)) {
+                            $error = "Parameter count mismatch. Types: " . strlen($types) . ", Params: " . count($params);
+                            error_log($error);
                         } else {
-                            $error = "Database error: " . mysqli_error($con);
-                            error_log("Database error details: " . print_r([
-                                'error' => mysqli_error($con),
-                                'errno' => mysqli_errno($con),
-                                'query' => $updateQuery
-                            ], true));
+                            mysqli_stmt_bind_param($updateQuery, $types, ...$params);
+
+                            if (mysqli_stmt_execute($updateQuery)) {
+                                $msg = "Draft updated successfully";
+                                error_log("Draft updated. ID: " . $postId);
+
+                                // Create thumbnail if new image was uploaded
+                                if ($imgnewfile) {
+                                    try {
+                                        $resizeObj = new resize("images/postimages/" . $imgnewfile);
+                                        $resizeObj->resizeImage(300, 200, 'exact');
+                                        $resizeObj->saveImage("images/thumb/" . $imgnewfile, 100);
+                                    } catch (Exception $e) {
+                                        error_log("Thumbnail creation failed: " . $e->getMessage());
+                                    }
+                                }
+                            } else {
+                                $error = "Database error: " . mysqli_error($con);
+                                error_log("Database error details: " . print_r([
+                                    'error' => mysqli_error($con),
+                                    'errno' => mysqli_errno($con),
+                                    'query' => $updateQuery
+                                ], true));
+                            }
                         }
                     } else {
                         // Insert new post/draft
