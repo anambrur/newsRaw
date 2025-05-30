@@ -9,6 +9,10 @@ ini_set('display_errors', 1);
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/php_errors.log');
 
+// Check if this is an AJAX request for auto-saving
+$isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest';
+$isAutoSave = isset($_POST['draft']) && $isAjax;
+
 // CSRF token generation
 if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
@@ -16,6 +20,11 @@ if (empty($_SESSION['csrf_token'])) {
 
 // Check authentication
 if (empty($_SESSION['login'])) {
+    if ($isAutoSave) {
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'message' => 'Session expired']);
+        exit;
+    }
     header('location:index.php');
     exit();
 }
@@ -34,6 +43,10 @@ function handleFileUpload($fileInput, $uploadDir, $allowedExtensions)
 
     // Check for upload errors
     if ($file['error'] !== UPLOAD_ERR_OK) {
+        // For auto-save, skip if no file was selected
+        if ($file['error'] === UPLOAD_ERR_NO_FILE && isset($_POST['draft']) && $_POST['draft'] == '1') {
+            return [true, null];
+        }
         $errors[] = "File upload error: " . $file['error'];
         return [false, implode(', ', $errors)];
     }
@@ -95,12 +108,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
     // Validate CSRF token
     if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
         $error = "Security error: Invalid CSRF token.";
+        if ($isAutoSave) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => $error]);
+            exit;
+        }
     } else {
         // Sanitize and validate inputs
         $posttitle = trim($_POST['posttitle']);
         $catid = intval($_POST['category']);
         $postdetails = trim($_POST['postdescription']);
-        // $reporter = intval($_POST['reporter']);
         $subtitle = trim($_POST['subtitle']);
         $source = trim($_POST['source']);
         $photocap = trim($_POST['photocap']);
@@ -108,21 +125,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
         $imageseo = trim($_POST['imageseo']);
         $seomkey = trim($_POST['seomkey']);
 
-
         // Initialize reporter variables
         $reporter = null;
         $reporterName = null;
 
         if (isset($_POST['useStaticReporter']) && $_POST['useStaticReporter'] === 'on') {
-            // Using static reporter
             $reporterName = trim($_POST['static_reporter']);
-            if (empty($reporterName)) {
+            if (empty($reporterName) && !isset($_POST['draft'])) {
                 $error = "Please enter a reporter name";
             }
         } else {
-            // Using dropdown selection
             $reporter = isset($_POST['reporter']) ? intval($_POST['reporter']) : null;
-            if ($reporter === null || $reporter === 0) {
+            if (($reporter === null || $reporter === 0) && !isset($_POST['draft'])) {
                 $error = "Please select a valid reporter from the dropdown";
             }
         }
@@ -153,12 +167,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
             $status = 1; // Default to published
         }
 
+        // For auto-save drafts, skip some validations
+        if (!isset($_POST['draft']) || $_POST['draft'] != '1') {
+            if (empty($posttitle) || empty($catid) || empty($postdetails)) {
+                $error = "Please fill all required fields.";
+            }
+        }
 
-
-        // Validate required fields
-        if (empty($posttitle) || empty($catid) || empty($postdetails)) {
-            $error = "Please fill all required fields.";
-        } else {
+        if (empty($error)) {
             // Handle file upload
             $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
             list($uploadSuccess, $uploadResult) = handleFileUpload('postimage', 'images/postimages/', $allowedExtensions);
@@ -169,51 +185,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                 $imgnewfile = $uploadResult;
                 $date = date('Y-m-d h:i:s');
 
-                // Check if post title already exists
-                $checkQuery = mysqli_prepare($con, "SELECT id FROM tblposts WHERE PostTitle = ?");
-                mysqli_stmt_bind_param($checkQuery, 's', $posttitle);
-                error_log("DEBUG: Preparing to execute query with params: " . print_r([
-                    $posttitle,
-                    $catid,
-                    $postdetails,
-                    $url,
-                    $status,
-                    $On_Slider,
-                    $On_Sportlingt,
-                    $On_Article,
-                    $On_Gfeed,
-                    $On_Save,
-                    $imgnewfile,
-                    $reporter,
-                    $reporterName,
-                    $source,
-                    $subtitle,
-                    $photocap,
-                    $seoshort,
-                    $imageseo,
-                    $seomkey,
-                    $date,
-                    $date,
-                    $scheduledPublish
-                ], true));
-                mysqli_stmt_execute($checkQuery);
-                mysqli_stmt_store_result($checkQuery);
+                // For drafts, don't check for duplicate titles
+                if (!isset($_POST['draft']) || $_POST['draft'] != '1') {
+                    $checkQuery = mysqli_prepare($con, "SELECT id FROM tblposts WHERE PostTitle = ?");
+                    mysqli_stmt_bind_param($checkQuery, 's', $posttitle);
+                    mysqli_stmt_execute($checkQuery);
+                    mysqli_stmt_store_result($checkQuery);
 
-                if (mysqli_stmt_num_rows($checkQuery) > 0) {
-                    $error = "Post title already exists. Please choose a different one.";
-                } else {
+                    if (mysqli_stmt_num_rows($checkQuery) > 0) {
+                        $error = "Post title already exists. Please choose a different one.";
+                    }
+                }
+
+                if (empty($error)) {
                     // Insert the new post
                     $insertQuery = mysqli_prepare(
                         $con,
                         "INSERT INTO tblposts 
                         (PostTitle, CategoryId, PostDetails, PostUrl, Is_Active, On_Slider, 
-                         On_Sportlingt, On_Article, On_Gfeed, On_Save, PostImage, repoter,reporterName, source, subtitle, photocap, seoshort, imageseo, seomkey, PostingDate, UpdationDate, ScheduledPublish) 
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                         On_Sportlingt, On_Article, On_Gfeed, On_Save, PostImage, repoter, reporterName, source, subtitle, photocap, seoshort, imageseo, seomkey, PostingDate, UpdationDate, ScheduledPublish, IsAutosave) 
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
                     );
+
+                    $isAutosave = (isset($_POST['draft']) && $_POST['draft'] == '1') ? 1 : 0;
 
                     mysqli_stmt_bind_param(
                         $insertQuery,
-                        'sisssiiiiisissssssssss',
+                        'sisssiiiiisissssssssssi',
                         $posttitle,
                         $catid,
                         $postdetails,
@@ -235,19 +233,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                         $seomkey,
                         $date,
                         $date,
-                        $scheduledPublish
+                        $scheduledPublish,
+                        $isAutosave
                     );
 
                     if (mysqli_stmt_execute($insertQuery)) {
                         $msg = "Post successfully " . ($status == 1 ? "published" : ($status == 2 ? "saved as draft" : "scheduled"));
+                        if ($isAutosave) {
+                            $msg .= " (Auto-saved)";
+                        }
 
-                        // Create thumbnail
-                        try {
-                            $resizeObj = new resize("images/postimages/" . $imgnewfile);
-                            $resizeObj->resizeImage(300, 200, 'exact');
-                            $resizeObj->saveImage("images/thumb/" . $imgnewfile, 100);
-                        } catch (Exception $e) {
-                            error_log("Thumbnail creation failed: " . $e->getMessage());
+                        // Create thumbnail if image was uploaded
+                        if ($imgnewfile) {
+                            try {
+                                $resizeObj = new resize("images/postimages/" . $imgnewfile);
+                                $resizeObj->resizeImage(300, 200, 'exact');
+                                $resizeObj->saveImage("images/thumb/" . $imgnewfile, 100);
+                            } catch (Exception $e) {
+                                error_log("Thumbnail creation failed: " . $e->getMessage());
+                            }
                         }
                     } else {
                         $error = "Database error: " . mysqli_error($con);
@@ -256,6 +260,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                 }
             }
         }
+    }
+
+    // If this is an auto-save request, return JSON response
+    if ($isAutoSave) {
+        header('Content-Type: application/json');
+        if ($error) {
+            echo json_encode(['success' => false, 'message' => $error]);
+        } else {
+            echo json_encode(['success' => true, 'message' => $msg]);
+        }
+        exit;
     }
 }
 ?>
@@ -651,6 +666,275 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                 }
                 return true;
             });
+
+
+            // Auto-save system implementation
+
+            // Client-side draft storage
+            const DRAFT_KEY = 'news_draft_' + window.location.pathname;
+            let autoSaveInterval;
+            const AUTO_SAVE_INTERVAL = 30000; // 30 seconds
+            let isAutoSaving = false;
+            let lastSavedData = null;
+            let changeTimer;
+
+            // Function to collect form data
+            function collectFormData() {
+                return {
+                    posttitle: $('#posttitle').val(),
+                    category: $('#category').val(),
+                    postdescription: $('.summernote').summernote('code'),
+                    subtitle: $('#subtitle').val(),
+                    source: $('#source').val(),
+                    photocap: $('#photocap').val(),
+                    seoshort: $('#seoshort').val(),
+                    imageseo: $('#imageseo').val(),
+                    seomkey: $('#seomkey').val(),
+                    test: $('#test3').is(':checked') ? 'value1' : '',
+                    sport: $('#test4').is(':checked') ? 'value1' : '',
+                    article: $('#test5').is(':checked') ? 'value1' : '',
+                    googlefeed: $('#test6').is(':checked') ? 'value1' : '',
+                    saveme: $('#test7').is(':checked') ? 'value1' : '',
+                    scheduled_publish: $('#scheduled_publish').val(),
+                    useStaticReporter: $('#useStaticReporter').is(':checked') ? 'on' : '',
+                    static_reporter: $('#staticReporter').val(),
+                    reporter: $('#reporter').val(),
+                    csrf_token: $('input[name="csrf_token"]').val()
+                };
+            }
+
+            // Function to check if form has changes
+            function hasFormChanged() {
+                const currentData = JSON.stringify(collectFormData());
+                return lastSavedData !== currentData;
+            }
+
+            // Show auto-save notification
+            function showAutoSaveNotification(message, isError = false) {
+                const notification = $(`<div class="alert ${isError ? 'alert-danger' : 'alert-info'}" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999;">
+            ${message}
+        </div>`);
+
+                $('body').append(notification);
+                setTimeout(() => notification.fadeOut(500, () => notification.remove()), 3000);
+            }
+
+            // Save to local storage
+            function saveToLocalDraft() {
+                const formData = collectFormData();
+                localStorage.setItem(DRAFT_KEY, JSON.stringify(formData));
+                console.log('Draft saved locally');
+            }
+
+            // Load from local storage
+            function loadFromLocalDraft() {
+                const draft = localStorage.getItem(DRAFT_KEY);
+                if (draft) {
+                    const data = JSON.parse(draft);
+
+                    // Restore form fields
+                    $('#posttitle').val(data.posttitle);
+                    $('#category').val(data.category);
+                    $('.summernote').summernote('code', data.postdescription);
+                    $('#subtitle').val(data.subtitle);
+                    $('#source').val(data.source);
+                    $('#photocap').val(data.photocap);
+                    $('#seoshort').val(data.seoshort);
+                    $('#imageseo').val(data.imageseo);
+                    $('#seomkey').val(data.seomkey);
+                    $('#test3').prop('checked', data.test === 'value1');
+                    $('#test4').prop('checked', data.sport === 'value1');
+                    $('#test5').prop('checked', data.article === 'value1');
+                    $('#test6').prop('checked', data.googlefeed === 'value1');
+                    $('#test7').prop('checked', data.saveme === 'value1');
+                    $('#scheduled_publish').val(data.scheduled_publish);
+                    $('#useStaticReporter').prop('checked', data.useStaticReporter === 'on');
+                    $('#staticReporter').val(data.static_reporter);
+                    $('#reporter').val(data.reporter);
+                    $('input[name="csrf_token"]').val(data.csrf_token);
+
+                    showAutoSaveNotification('Recovered unsaved draft from local storage');
+
+                    // Update last saved data
+                    lastSavedData = JSON.stringify(data);
+                }
+            }
+
+            // Clear local draft
+            function clearLocalDraft() {
+                localStorage.removeItem(DRAFT_KEY);
+            }
+
+            // Auto-save function
+            function autoSaveDraft() {
+                if (isAutoSaving || !hasFormChanged()) return;
+
+                isAutoSaving = true;
+                updateSaveStatus(true);
+
+                // First save to localStorage (instant)
+                saveToLocalDraft();
+
+                // Then try to save to server
+                const formData = new FormData();
+                const data = collectFormData();
+
+                Object.keys(data).forEach(key => {
+                    formData.append(key, data[key]);
+                });
+
+                const fileInput = document.getElementById('postimage');
+                if (fileInput.files.length > 0) {
+                    formData.append('postimage', fileInput.files[0]);
+                }
+
+                formData.append('draft', '1');
+
+                $.ajax({
+                    url: window.location.href,
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        lastSavedData = JSON.stringify(data);
+                        showAutoSaveNotification('Draft saved to server');
+
+                        // Only clear local draft if server save succeeded
+                        if (response.success) {
+                            clearLocalDraft();
+                        }
+                        isAutoSaving = false;
+                        updateSaveStatus(false);
+                    },
+                    error: function(xhr, status, error) {
+                        showAutoSaveNotification('Saved locally (server unavailable)', true);
+                        isAutoSaving = false;
+                        updateSaveStatus(false, true);
+                    }
+                });
+            }
+
+            // Update save status indicator
+            function updateSaveStatus(isSaving, isError = false) {
+                const indicator = $('#save-status');
+                if (isSaving) {
+                    indicator.text('Saving...').css('color', 'orange');
+                } else if (isError) {
+                    indicator.text('Saved locally').css('color', '#ff9800');
+                    setTimeout(() => indicator.text(''), 5000);
+                } else {
+                    indicator.text('All changes saved').css('color', 'green');
+                    setTimeout(() => indicator.text(''), 5000);
+                }
+            }
+
+            // Initialize auto-save
+            function initAutoSave() {
+                // Start auto-save interval
+                autoSaveInterval = setInterval(autoSaveDraft, AUTO_SAVE_INTERVAL);
+
+                // Also save when leaving the page
+                $(window).on('beforeunload', function(e) {
+                    if (hasFormChanged()) {
+                        // Perform a synchronous save to localStorage
+                        saveToLocalDraft();
+
+                        // Try to save to server using Beacon API
+                        const data = collectFormData();
+                        const formData = new FormData();
+
+                        Object.keys(data).forEach(key => {
+                            formData.append(key, data[key]);
+                        });
+                        formData.append('draft', '1');
+
+                        if (navigator.sendBeacon) {
+                            navigator.sendBeacon(window.location.href, formData);
+                        }
+
+                        return 'You have unsaved changes. A draft has been saved locally.';
+                    }
+                });
+
+                // Store initial data
+                lastSavedData = JSON.stringify(collectFormData());
+            }
+
+            // Add save status indicator to DOM
+            $('form[name="addpost"]').prepend('<div id="save-status" style="position: fixed; bottom: 10px; left: 10px; z-index: 9999; background: white; padding: 5px 10px; border-radius: 3px;"></div>');
+
+            // Load any existing draft on page load
+            loadFromLocalDraft();
+
+            // Initialize the auto-save system
+            initAutoSave();
+
+            // Clear draft when successfully published
+            $('form[name="addpost"]').on('submit', function(e) {
+                if (!$(this).find('[name="draft"]').length) {
+                    clearLocalDraft();
+                }
+            });
+
+            // Auto-save when summernote content changes
+            $('.summernote').on('summernote.change', function() {
+                if (hasFormChanged()) {
+                    autoSaveDraft();
+                }
+            });
+
+            // Save when other form fields change (with debounce)
+            $('input, select, textarea').not('.summernote').on('change input', function() {
+                clearTimeout(changeTimer);
+                changeTimer = setTimeout(() => {
+                    if (hasFormChanged()) {
+                        autoSaveDraft();
+                    }
+                }, 2000);
+            });
+
+            // Also save periodically regardless of changes (every 5 minutes)
+            setInterval(saveToLocalDraft, 300000);
+
+            // Rest of your existing JavaScript...
+            $('.summernote').summernote({
+                height: 300,
+                toolbar: [
+                    ['style', ['style']],
+                    ['font', ['bold', 'italic', 'underline', 'clear']],
+                    ['fontname', ['fontname']],
+                    ['color', ['color']],
+                    ['para', ['ul', 'ol', 'paragraph']],
+                    ['height', ['height']],
+                    ['table', ['table']],
+                    ['insert', ['link', 'picture', 'hr']],
+                    ['view', ['fullscreen', 'codeview']],
+                    ['help', ['help']]
+                ]
+            });
+
+            // Initialize Select2
+            $('.select2').select2({
+                placeholder: "Select Reporter",
+                allowClear: true
+            });
+
+            // Toggle between dropdown and static reporter
+            $('#useStaticReporter').change(function() {
+                if ($(this).is(':checked')) {
+                    $('#reporterDropdownContainer').hide();
+                    $('#staticReporterContainer').show();
+                    $('#reporter').val('').removeAttr('required');
+                } else {
+                    $('#reporterDropdownContainer').show();
+                    $('#staticReporterContainer').hide();
+                    $('#reporter').attr('required', 'required');
+                    $('#staticReporter').val('');
+                }
+            });
+
+
         });
     </script>
 </body>

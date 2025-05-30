@@ -5,7 +5,7 @@ include('includes/resizeLib.php');
 
 // Error reporting configuration
 error_reporting(E_ALL);
-ini_set('display_errors', 0);
+ini_set('display_errors', 1);
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/php_errors.log');
 
@@ -91,7 +91,7 @@ function handleFileUpload($fileInput, $uploadDir, $allowedExtensions)
 }
 
 // Process form submission
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($_POST['draft']))) {
     // Validate CSRF token
     if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
         $error = "Security error: Invalid CSRF token.";
@@ -100,13 +100,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
         $posttitle = trim($_POST['posttitle']);
         $catid = intval($_POST['category']);
         $postdetails = trim($_POST['postdescription']);
-        $reporter = intval($_POST['reporter']);
+        // $reporter = intval($_POST['reporter']);
         $subtitle = trim($_POST['subtitle']);
         $source = trim($_POST['source']);
         $photocap = trim($_POST['photocap']);
         $seoshort = trim($_POST['seoshort']);
         $imageseo = trim($_POST['imageseo']);
         $seomkey = trim($_POST['seomkey']);
+
+
+        // Initialize reporter variables
+        $reporter = null;
+        $reporterName = null;
+
+        if (isset($_POST['useStaticReporter']) && $_POST['useStaticReporter'] === 'on') {
+            // Using static reporter
+            $reporterName = trim($_POST['static_reporter']);
+            if (empty($reporterName)) {
+                $error = "Please enter a reporter name";
+            }
+        } else {
+            // Using dropdown selection
+            $reporter = isset($_POST['reporter']) ? intval($_POST['reporter']) : null;
+            if ($reporter === null || $reporter === 0) {
+                $error = "Please select a valid reporter from the dropdown";
+            }
+        }
 
         // Generate URL slug
         $arr = explode(" ", $posttitle);
@@ -119,18 +138,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
         $On_Gfeed = isset($_POST['googlefeed']) && $_POST['googlefeed'] === 'value1' ? 1 : 0;
         $On_Save = isset($_POST['saveme']) && $_POST['saveme'] === 'value1' ? 1 : 0;
 
-
         // Get scheduled publish time
         $scheduledPublish = null;
         if (!empty($_POST['scheduled_publish'])) {
             $scheduledPublish = date('Y-m-d H:i:s', strtotime($_POST['scheduled_publish']));
         }
 
-        // Set Is_Active based on scheduling
-        $status = (empty($scheduledPublish) || strtotime($scheduledPublish) <= time()) ? 1 : 3;
+        // Set Is_Active based on submission type and scheduling
+        if (isset($_POST['draft'])) {
+            $status = 2; // Draft status
+        } elseif (!empty($scheduledPublish)) {
+            $status = (strtotime($scheduledPublish) <= time()) ? 1 : 3;
+        } else {
+            $status = 1; // Default to published
+        }
+
+
 
         // Validate required fields
-        if (empty($posttitle) || empty($catid) || empty($postdetails) || empty($reporter)) {
+        if (empty($posttitle) || empty($catid) || empty($postdetails)) {
             $error = "Please fill all required fields.";
         } else {
             // Handle file upload
@@ -146,6 +172,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                 // Check if post title already exists
                 $checkQuery = mysqli_prepare($con, "SELECT id FROM tblposts WHERE PostTitle = ?");
                 mysqli_stmt_bind_param($checkQuery, 's', $posttitle);
+                error_log("DEBUG: Preparing to execute query with params: " . print_r([
+                    $posttitle,
+                    $catid,
+                    $postdetails,
+                    $url,
+                    $status,
+                    $On_Slider,
+                    $On_Sportlingt,
+                    $On_Article,
+                    $On_Gfeed,
+                    $On_Save,
+                    $imgnewfile,
+                    $reporter,
+                    $reporterName,
+                    $source,
+                    $subtitle,
+                    $photocap,
+                    $seoshort,
+                    $imageseo,
+                    $seomkey,
+                    $date,
+                    $date,
+                    $scheduledPublish
+                ], true));
                 mysqli_stmt_execute($checkQuery);
                 mysqli_stmt_store_result($checkQuery);
 
@@ -156,20 +206,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                     $insertQuery = mysqli_prepare(
                         $con,
                         "INSERT INTO tblposts 
-                (PostTitle, CategoryId, PostDetails, PostUrl, Is_Active, On_Slider, 
-                 On_Sportlingt, On_Article, On_Gfeed, On_Save, PostImage, repoter, 
-                 source, subtitle, photocap, seoshort, imageseo, seomkey, PostingDate, UpdationDate, ScheduledPublish) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                        (PostTitle, CategoryId, PostDetails, PostUrl, Is_Active, On_Slider, 
+                         On_Sportlingt, On_Article, On_Gfeed, On_Save, PostImage, repoter,reporterName, source, subtitle, photocap, seoshort, imageseo, seomkey, PostingDate, UpdationDate, ScheduledPublish) 
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
                     );
 
                     mysqli_stmt_bind_param(
                         $insertQuery,
-                        'sisssiiiiisisssssssss',
+                        'sisssiiiiisissssssssss',
                         $posttitle,
                         $catid,
                         $postdetails,
                         $url,
-                        $status,  // This now properly reflects the scheduled status
+                        $status,
                         $On_Slider,
                         $On_Sportlingt,
                         $On_Article,
@@ -177,6 +226,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                         $On_Save,
                         $imgnewfile,
                         $reporter,
+                        $reporterName,
                         $source,
                         $subtitle,
                         $photocap,
@@ -189,7 +239,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                     );
 
                     if (mysqli_stmt_execute($insertQuery)) {
-                        $msg = "Post successfully " . ($status ? "published" : "scheduled");
+                        $msg = "Post successfully " . ($status == 1 ? "published" : ($status == 2 ? "saved as draft" : "scheduled"));
 
                         // Create thumbnail
                         try {
@@ -251,6 +301,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
 
         .card {
             margin-bottom: 20px;
+        }
+
+        #staticReporterContainer {
+            margin-top: 10px;
+        }
+
+        .form-check {
+            margin-bottom: 10px;
         }
     </style>
 </head>
@@ -444,17 +502,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
 
                                 <div class="form-group m-b-20">
                                     <label>Reporter</label>
-                                    <select class="form-control" name="reporter" id="reporter" required>
-                                        <option value="">Select Reporter</option>
-                                        <?php
-                                        $rets = mysqli_query($con, "SELECT * FROM reporter WHERE deleted='false'");
-                                        while ($result = mysqli_fetch_array($rets)) {
-                                            $selected = ($result['reporterID'] == $reporter) ? 'selected' : '';
-                                            echo '<option value="' . htmlspecialchars($result['reporterID']) . '" ' . $selected . '>'
-                                                . htmlspecialchars($result['name']) . '</option>';
-                                        }
-                                        ?>
-                                    </select>
+
+                                    <!-- Checkbox to toggle static reporter -->
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="useStaticReporter" name="useStaticReporter">
+                                        <label class="form-check-label" for="useStaticReporter">Use custom reporter name</label>
+                                    </div>
+
+                                    <!-- Select2 Dropdown (default) -->
+                                    <div id="reporterDropdownContainer">
+                                        <select class="form-control select2" name="reporter" id="reporter" required>
+                                            <option value="">Select Reporter</option>
+                                            <?php
+                                            $rets = mysqli_query($con, "SELECT * FROM reporter WHERE deleted='false'");
+                                            while ($result = mysqli_fetch_array($rets)) {
+                                                echo '<option value="' . htmlspecialchars($result['reporterID']) . '">'
+                                                    . htmlspecialchars($result['name']) . '</option>';
+                                            }
+                                            ?>
+                                        </select>
+                                    </div>
+
+                                    <!-- Static Reporter Input (hidden by default) -->
+                                    <div id="staticReporterContainer" style="display: none;">
+                                        <input type="text" class="form-control" id="staticReporter" name="static_reporter"
+                                            placeholder="Enter reporter name">
+                                    </div>
                                 </div>
 
 
@@ -488,7 +561,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                                 </div>
 
                                 <button type="submit" name="submit" class="btn btn-success waves-effect waves-light">Publish Post</button>
-                                <button type="reset" class="btn btn-danger waves-effect waves-light">Reset Form</button>
+                                <button type="submit" name="draft" class="btn btn-primary waves-effect waves-light">Save as Draft</button>
                                 </form>
                             </div>
                         </div>
@@ -524,6 +597,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                     ['view', ['fullscreen', 'codeview']],
                     ['help', ['help']]
                 ]
+            });
+
+
+            // Initialize Select2
+            $('.select2').select2({
+                placeholder: "Select Reporter",
+                allowClear: true
+            });
+
+
+            // Toggle between dropdown and static reporter
+            $('#useStaticReporter').change(function() {
+                if ($(this).is(':checked')) {
+                    // Hide dropdown and show static input
+                    $('#reporterDropdownContainer').hide();
+                    $('#staticReporterContainer').show();
+
+                    // Remove required attribute from dropdown and clear selection
+                    $('#reporter').val('').removeAttr('required');
+                } else {
+                    // Show dropdown and hide static input
+                    $('#reporterDropdownContainer').show();
+                    $('#staticReporterContainer').hide();
+
+                    // Add required attribute back
+                    $('#reporter').attr('required', 'required');
+
+                    // Clear static reporter input
+                    $('#staticReporter').val('');
+                }
+            });
+
+            // Form submission handler
+            $('form[name="addpost"]').submit(function(e) {
+                if ($('#useStaticReporter').is(':checked')) {
+                    // Clear the dropdown value completely
+                    $('#reporter').val('');
+
+                    // Validate custom name
+                    if ($('#staticReporter').val().trim() === '') {
+                        alert('Please enter a reporter name');
+                        e.preventDefault();
+                        return false;
+                    }
+                } else {
+                    // Validate dropdown selection
+                    if ($('#reporter').val() === '' || $('#reporter').val() === '0') {
+                        alert('Please select a reporter from the dropdown');
+                        e.preventDefault();
+                        return false;
+                    }
+                }
+                return true;
             });
         });
     </script>
