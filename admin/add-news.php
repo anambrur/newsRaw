@@ -1,4 +1,5 @@
 <?php
+ob_start();
 session_start();
 include('includes/config.php');
 include('includes/resizeLib.php');
@@ -38,14 +39,22 @@ $On_Slider = $On_Sportlingt = $On_Article = $On_Gfeed = $On_Save = 0;
 // Function to safely handle file uploads
 function handleFileUpload($fileInput, $uploadDir, $allowedExtensions)
 {
-    $errors = [];
+    // For auto-save drafts, skip file requirement completely
+    if (isset($_POST['draft']) && $_POST['draft'] == '1' && (!isset($_FILES[$fileInput]) || $_FILES[$fileInput]['error'] === UPLOAD_ERR_NO_FILE)) {
+        return [true, null];
+    }
+
+    // Check if file input exists at all
+    if (!isset($_FILES[$fileInput])) {
+        return [false, "No file was uploaded"];
+    }
+
     $file = $_FILES[$fileInput];
 
     // Check for upload errors
     if ($file['error'] !== UPLOAD_ERR_OK) {
-        // For auto-save, skip if no file was selected
-        if ($file['error'] === UPLOAD_ERR_NO_FILE && isset($_POST['draft']) && $_POST['draft'] == '1') {
-            return [true, null];
+        if ($file['error'] === UPLOAD_ERR_NO_FILE) {
+            return [false, "Please select a file to upload"];
         }
         $errors[] = "File upload error: " . $file['error'];
         return [false, implode(', ', $errors)];
@@ -109,8 +118,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
     if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
         $error = "Security error: Invalid CSRF token.";
         if ($isAutoSave) {
+            ob_end_clean(); // Clean any output buffers
             header('Content-Type: application/json');
-            echo json_encode(['success' => false, 'message' => $error]);
+            if ($error) {
+                echo json_encode(['success' => false, 'message' => $error]);
+            } else {
+                echo json_encode(['success' => true, 'message' => $msg]);
+            }
             exit;
         }
     } else {
@@ -175,16 +189,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
         }
 
         if (empty($error)) {
-            // Handle file upload
-            $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-            list($uploadSuccess, $uploadResult) = handleFileUpload('postimage', 'images/postimages/', $allowedExtensions);
+            // Initialize variables
+            $imgnewfile = null;
+            $uploadSuccess = true;
+            $date = date('Y-m-d h:i:s');
 
-            if (!$uploadSuccess) {
-                $error = $uploadResult;
-            } else {
-                $imgnewfile = $uploadResult;
-                $date = date('Y-m-d h:i:s');
+            // Handle file upload only if:
+            // 1. This is NOT a draft save OR
+            // 2. This is a draft but a file was actually uploaded
+            if (!isset($_POST['draft']) || $_POST['draft'] != '1' || (isset($_FILES['postimage']) && $_FILES['postimage']['error'] === UPLOAD_ERR_OK)) {
+                $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+                list($uploadSuccess, $uploadResult) = handleFileUpload('postimage', 'images/postimages/', $allowedExtensions);
 
+                if (!$uploadSuccess) {
+                    $error = $uploadResult;
+                } else {
+                    $imgnewfile = $uploadResult;
+                }
+            }
+
+            if (empty($error)) {
                 // For drafts, don't check for duplicate titles
                 if (!isset($_POST['draft']) || $_POST['draft'] != '1') {
                     $checkQuery = mysqli_prepare($con, "SELECT id FROM tblposts WHERE PostTitle = ?");
@@ -202,9 +226,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                     $insertQuery = mysqli_prepare(
                         $con,
                         "INSERT INTO tblposts 
-                        (PostTitle, CategoryId, PostDetails, PostUrl, Is_Active, On_Slider, 
-                         On_Sportlingt, On_Article, On_Gfeed, On_Save, PostImage, repoter, reporterName, source, subtitle, photocap, seoshort, imageseo, seomkey, PostingDate, UpdationDate, ScheduledPublish, IsAutosave) 
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                (PostTitle, CategoryId, PostDetails, PostUrl, Is_Active, On_Slider, 
+                 On_Sportlingt, On_Article, On_Gfeed, On_Save, PostImage, repoter, reporterName, source, subtitle, photocap, seoshort, imageseo, seomkey, PostingDate, UpdationDate, ScheduledPublish, IsAutosave) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
                     );
 
                     $isAutosave = (isset($_POST['draft']) && $_POST['draft'] == '1') ? 1 : 0;
@@ -807,63 +831,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
             }
 
             // Auto-save function
-            // function autoSaveDraft() {
-            //     if (isAutoSaving || !hasFormChanged()) return;
-
-            //     isAutoSaving = true;
-            //     updateSaveStatus(true);
-
-            //     // First save to localStorage (instant)
-            //     saveToLocalDraft();
-
-            //     // Then try to save to server
-            //     const formData = new FormData();
-            //     const data = collectFormData();
-
-            //     Object.keys(data).forEach(key => {
-            //         formData.append(key, data[key]);
-            //     });
-
-            //     const fileInput = document.getElementById('postimage');
-            //     if (fileInput.files.length > 0) {
-            //         formData.append('postimage', fileInput.files[0]);
-            //     }
-
-            //     formData.append('draft', '1');
-            //     console.log('Form data being sent:', {
-            //         title: data.posttitle,
-            //         category: data.category,
-            //         desc_length: data.postdescription.length,
-            //         hasImage: fileInput.files.length > 0
-            //     });
-
-            //     $.ajax({
-            //         url: window.location.href,
-            //         type: 'POST',
-            //         data: formData,
-            //         processData: false,
-            //         contentType: false,
-            //         // In your autoSaveDraft() function, modify the AJAX success handler:
-            //         success: function(response) {
-            //             console.log('Server response:', response); // Add this line
-            //             if (response && response.success) {
-            //                 lastSavedData = JSON.stringify(data);
-            //                 showAutoSaveNotification('Draft saved to server');
-            //                 clearLocalDraft();
-            //             } else {
-            //                 showAutoSaveNotification(response?.message || 'Draft save failed', true);
-            //             }
-            //             isAutoSaving = false;
-            //             updateSaveStatus(false);
-            //         },
-            //         error: function(xhr, status, error) {
-            //             showAutoSaveNotification('Saved locally (server unavailable)', true);
-            //             isAutoSaving = false;
-            //             updateSaveStatus(false, true);
-            //         }
-            //     });
-            // }
-
 
             function autoSaveDraft() {
                 if (isAutoSaving) {
@@ -899,7 +866,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                     console.log('Including file in upload:', fileInput.files[0].name);
                     formData.append('postimage', fileInput.files[0]);
                 } else {
-                    console.log('No file selected for upload');
+                    console.log('No file selected - sending without file');
+                    // Explicitly send null for postimage
+                    formData.append('postimage', '');
                 }
 
                 formData.append('draft', '1');
