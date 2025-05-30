@@ -10,9 +10,6 @@ ini_set('display_errors', 1);
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/php_errors.log');
 
-// Constants
-define('DRAFT_KEY', 'news_draft_' . basename(__FILE__));
-
 // Check if this is an AJAX request for auto-saving
 $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest';
 $isAutoSave = isset($_POST['draft']) && $isAjax;
@@ -226,128 +223,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                 if (empty($error)) {
                     $isAutosave = (isset($_POST['draft']) && $_POST['draft'] == '1') ? 1 : 0;
 
-                    // Check if we're publishing an existing draft
-                    if ($postId > 0 && isset($_POST['submit']) && !isset($_POST['draft'])) {
-                        // Convert draft to published post
-                        $status = 1; // Published status
-
-                        $updateQuery = mysqli_prepare(
-                            $con,
-                            "UPDATE tblposts SET 
-                                PostTitle = ?, 
-                                CategoryId = ?, 
-                                PostDetails = ?, 
-                                PostUrl = ?, 
-                                Is_Active = ?, 
-                                On_Slider = ?, 
-                                On_Sportlingt = ?, 
-                                On_Article = ?, 
-                                On_Gfeed = ?, 
-                                On_Save = ?, " .
-                                ($imgnewfile ? "PostImage = ?, " : "") . "
-                                repoter = ?, 
-                                reporterName = ?, 
-                                source = ?, 
-                                subtitle = ?, 
-                                photocap = ?, 
-                                seoshort = ?, 
-                                imageseo = ?, 
-                                seomkey = ?, 
-                                UpdationDate = ?, 
-                                ScheduledPublish = ?,
-                                IsAutosave = 0
-                            WHERE id = ?"
-                        );
-
-                        // Prepare parameters
-                        $params = [
-                            $posttitle,        // s
-                            $catid,            // i
-                            $postdetails,      // s
-                            $url,              // s
-                            $status,           // i
-                            $On_Slider,        // i
-                            $On_Sportlingt,    // i
-                            $On_Article,       // i
-                            $On_Gfeed,         // i
-                            $On_Save           // i
-                        ];
-
-                        if ($imgnewfile) {
-                            $params[] = $imgnewfile;  // s
-                        }
-
-                        $params = array_merge($params, [
-                            $reporter,         // i
-                            $reporterName,     // s
-                            $source,           // s
-                            $subtitle,         // s
-                            $photocap,         // s
-                            $seoshort,         // s
-                            $imageseo,         // s
-                            $seomkey,          // s
-                            $date,             // s
-                            $scheduledPublish, // s
-                            $postId            // i
-                        ]);
-
-                        // Create type string
-                        $types = 'sisssiiiii'; // 10 parameters (5 strings, 5 integers)
-
-                        if ($imgnewfile) {
-                            $types .= 's';    // +1 string for image
-                        }
-
-                        // Add types for remaining parameters
-                        $types .= 'issssssssi'; // 10 more parameters (7 strings, 3 integers)
-
-                        mysqli_stmt_bind_param($updateQuery, $types, ...$params);
-
-                        if (mysqli_stmt_execute($updateQuery)) {
-                            $msg = "Draft successfully published";
-                            // Clear local draft after successful publish
-                            echo '<script>localStorage.removeItem("' . DRAFT_KEY . '");</script>';
-
-                            // Create thumbnail if new image was uploaded
-                            if ($imgnewfile) {
-                                try {
-                                    $resizeObj = new resize("images/postimages/" . $imgnewfile);
-                                    $resizeObj->resizeImage(300, 200, 'exact');
-                                    $resizeObj->saveImage("images/thumb/" . $imgnewfile, 100);
-                                } catch (Exception $e) {
-                                    error_log("Thumbnail creation failed: " . $e->getMessage());
-                                }
-                            }
-                        } else {
-                            $error = "Database error: " . mysqli_error($con);
-                        }
-                    }
                     // Check if we're updating an existing draft
-                    elseif ($postId > 0 && $status == 2) {
+                    if ($postId > 0 && $status == 2) {
                         // Update existing draft
                         $query = "UPDATE tblposts SET 
-                            PostTitle = ?, 
-                            CategoryId = ?, 
-                            PostDetails = ?, 
-                            PostUrl = ?, 
-                            On_Slider = ?, 
-                            On_Sportlingt = ?, 
-                            On_Article = ?, 
-                            On_Gfeed = ?, 
-                            On_Save = ?, " .
-                            ($imgnewfile ? "PostImage = ?, " : "") . "
-                            repoter = ?, 
-                            reporterName = ?, 
-                            source = ?, 
-                            subtitle = ?, 
-                            photocap = ?, 
-                            seoshort = ?, 
-                            imageseo = ?, 
-                            seomkey = ?, 
-                            UpdationDate = ?, 
-                            ScheduledPublish = ?,
-                            IsAutosave = ?
-                        WHERE id = ?";
+        PostTitle = ?, 
+        CategoryId = ?, 
+        PostDetails = ?, 
+        PostUrl = ?, 
+        On_Slider = ?, 
+        On_Sportlingt = ?, 
+        On_Article = ?, 
+        On_Gfeed = ?, 
+        On_Save = ?, ";
+
+                        // Add PostImage to query if new file was uploaded
+                        if ($imgnewfile) {
+                            $query .= "PostImage = ?, ";
+                        }
+
+                        $query .= "repoter = ?, 
+        reporterName = ?, 
+        source = ?, 
+        subtitle = ?, 
+        photocap = ?, 
+        seoshort = ?, 
+        imageseo = ?, 
+        seomkey = ?, 
+        UpdationDate = ?, 
+        ScheduledPublish = ?,
+        IsAutosave = ?
+    WHERE id = ?";
 
                         $updateQuery = mysqli_prepare($con, $query);
 
@@ -364,10 +270,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                             $On_Save           // i
                         ];
 
+                        // Add image if exists
                         if ($imgnewfile) {
                             $params[] = $imgnewfile;  // s
                         }
 
+                        // Add remaining parameters
                         $params = array_merge($params, [
                             $reporter,         // i
                             $reporterName,     // s
@@ -391,25 +299,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                         }
 
                         // Add types for remaining parameters
-                        $types .= 'issssssssi'; // 11 more parameters (8 strings, 3 integers)
+                        // repoter(i), reporterName(s), source(s), subtitle(s), photocap(s), 
+                        // seoshort(s), imageseo(s), seomkey(s), UpdationDate(s), ScheduledPublish(s), 
+                        // IsAutosave(i), id(i)
+                        $types .= 'isssssssssii'; // 12 more parameters (8 strings, 4 integers)
 
-                        mysqli_stmt_bind_param($updateQuery, $types, ...$params);
+                        // Debug output to verify counts match
+                        error_log("Type string: " . $types);
+                        error_log("Type string length: " . strlen($types));
+                        error_log("Params count: " . count($params));
+                        error_log("Params: " . print_r($params, true));
 
-                        if (mysqli_stmt_execute($updateQuery)) {
-                            $msg = "Draft updated successfully";
-
-                            // Create thumbnail if new image was uploaded
-                            if ($imgnewfile) {
-                                try {
-                                    $resizeObj = new resize("images/postimages/" . $imgnewfile);
-                                    $resizeObj->resizeImage(300, 200, 'exact');
-                                    $resizeObj->saveImage("images/thumb/" . $imgnewfile, 100);
-                                } catch (Exception $e) {
-                                    error_log("Thumbnail creation failed: " . $e->getMessage());
-                                }
-                            }
+                        if (strlen($types) !== count($params)) {
+                            $error = "Parameter count mismatch. Types: " . strlen($types) . ", Params: " . count($params);
+                            error_log($error);
                         } else {
-                            $error = "Database error: " . mysqli_error($con);
+                            mysqli_stmt_bind_param($updateQuery, $types, ...$params);
+
+                            if (mysqli_stmt_execute($updateQuery)) {
+                                $msg = "Draft updated successfully";
+                                error_log("Draft updated. ID: " . $postId);
+
+                                // Create thumbnail if new image was uploaded
+                                if ($imgnewfile) {
+                                    try {
+                                        $resizeObj = new resize("images/postimages/" . $imgnewfile);
+                                        $resizeObj->resizeImage(300, 200, 'exact');
+                                        $resizeObj->saveImage("images/thumb/" . $imgnewfile, 100);
+                                    } catch (Exception $e) {
+                                        error_log("Thumbnail creation failed: " . $e->getMessage());
+                                    }
+                                }
+                            } else {
+                                $error = "Database error: " . mysqli_error($con);
+                                error_log("Database error details: " . print_r([
+                                    'error' => mysqli_error($con),
+                                    'errno' => mysqli_errno($con),
+                                    'query' => $updateQuery
+                                ], true));
+                            }
                         }
                     } else {
                         // Insert new post/draft
@@ -455,6 +383,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                             if ($isAutosave) {
                                 $msg .= " (Auto-saved)";
                             }
+                            error_log("Post saved successfully. ID: " . $postId);
 
                             // Create thumbnail if image was uploaded
                             if ($imgnewfile) {
@@ -468,6 +397,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                             }
                         } else {
                             $error = "Database error: " . mysqli_error($con);
+                            error_log("Database error details: " . print_r([
+                                'error' => mysqli_error($con),
+                                'errno' => mysqli_errno($con),
+                                'query' => $insertQuery
+                            ], true));
                         }
                     }
                 }
@@ -831,7 +765,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                                 </div>
 
                                 <button type="submit" name="submit" class="btn btn-success waves-effect waves-light">Publish Post</button>
-                                <button type="submit" name="draft" value="1" class="btn btn-primary waves-effect waves-light">Save as Draft</button>
+                                <button type="submit" name="draft" class="btn btn-primary waves-effect waves-light">Save as Draft</button>
                                 </form>
                             </div>
                         </div>
@@ -890,8 +824,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                 }
             });
 
+            // Form submission handler
+            $('form[name="addpost"]').submit(function(e) {
+                if ($('#useStaticReporter').is(':checked')) {
+                    $('#reporter').val('');
+                    if ($('#staticReporter').val().trim() === '') {
+                        alert('Please enter a reporter name');
+                        e.preventDefault();
+                        return false;
+                    }
+                } else {
+                    if ($('#reporter').val() === '' || $('#reporter').val() === '0') {
+                        alert('Please select a reporter from the dropdown');
+                        e.preventDefault();
+                        return false;
+                    }
+                }
+                return true;
+            });
+
             // Auto-save system implementation
-            const DRAFT_KEY = '<?php echo DRAFT_KEY; ?>';
+            const DRAFT_KEY = 'news_draft_' + window.location.pathname;
             let autoSaveInterval;
             const AUTO_SAVE_INTERVAL = 30000; // 30 seconds
             let isAutoSaving = false;
@@ -980,29 +933,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
 
                     // Update last saved data
                     lastSavedData = JSON.stringify(data);
-
-                    // Update UI to show we're editing a draft
-                    updateDraftUI(true);
-                } else {
-                    updateDraftUI(false);
-                }
-            }
-
-            // Update UI based on draft status
-            function updateDraftUI(isDraft) {
-                if (isDraft) {
-                    $('button[name="submit"]').text('Update Published Post');
-                    $('#draft-status').text('Editing draft').show();
-                } else {
-                    $('button[name="submit"]').text('Publish Post');
-                    $('#draft-status').hide();
                 }
             }
 
             // Clear local draft
             function clearLocalDraft() {
                 localStorage.removeItem(DRAFT_KEY);
-                updateDraftUI(false);
             }
 
             // Auto-save function
@@ -1061,18 +997,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                             // Update the post_id if this is a new draft
                             if (response.post_id && !$('#post_id').val()) {
                                 $('#post_id').val(response.post_id);
-                                // Update local storage with the post_id
-                                const draft = localStorage.getItem(DRAFT_KEY);
-                                if (draft) {
-                                    const data = JSON.parse(draft);
-                                    data.post_id = response.post_id;
-                                    localStorage.setItem(DRAFT_KEY, JSON.stringify(data));
-                                }
-                                updateDraftUI(true);
                             }
 
                             lastSavedData = JSON.stringify(data);
                             showAutoSaveNotification(response.message || 'Draft saved');
+                            clearLocalDraft();
                         } else {
                             showAutoSaveNotification(response?.message || 'Draft save failed', true);
                         }
@@ -1136,57 +1065,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                 lastSavedData = JSON.stringify(collectFormData());
             }
 
-            // Form submission handler
-            $('form[name="addpost"]').submit(function(e) {
-                // Get the current draft ID
-                const draft = localStorage.getItem(DRAFT_KEY);
-                if (draft) {
-                    const data = JSON.parse(draft);
-                    if (data.post_id) {
-                        // Add the post_id to the form before submission
-                        $('<input>').attr({
-                            type: 'hidden',
-                            name: 'post_id',
-                            value: data.post_id
-                        }).appendTo(this);
-                    }
-                }
-
-                // Validate reporter selection
-                if ($('#useStaticReporter').is(':checked')) {
-                    $('#reporter').val('');
-                    if ($('#staticReporter').val().trim() === '') {
-                        alert('Please enter a reporter name');
-                        e.preventDefault();
-                        return false;
-                    }
-                } else {
-                    if ($('#reporter').val() === '' || $('#reporter').val() === '0') {
-                        alert('Please select a reporter from the dropdown');
-                        e.preventDefault();
-                        return false;
-                    }
-                }
-
-                // Clear draft if this is a publish action
-                if (!$(this).find('[name="draft"]').length) {
-                    clearLocalDraft();
-                }
-
-                return true;
-            });
-
             // Add save status indicator to DOM
             $('form[name="addpost"]').prepend('<div id="save-status" style="position: fixed; bottom: 10px; left: 10px; z-index: 9999; background: white; padding: 5px 10px; border-radius: 3px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); font-size: 13px;"></div>');
-
-            // Add draft status indicator
-            $('form[name="addpost"]').prepend('<div id="draft-status" style="display: none; position: fixed; bottom: 40px; left: 10px; z-index: 9999; background: #e3f2fd; padding: 5px 10px; border-radius: 3px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); font-size: 13px;"></div>');
 
             // Load any existing draft on page load
             loadFromLocalDraft();
 
             // Initialize the auto-save system
             initAutoSave();
+
+            // Clear draft when successfully published
+            $('form[name="addpost"]').on('submit', function(e) {
+                if (!$(this).find('[name="draft"]').length) {
+                    clearLocalDraft();
+                }
+            });
 
             // Auto-save when summernote content changes (with delay)
             $('.summernote').on('summernote.change', function() {
