@@ -390,7 +390,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                             $postId            // i
                         ]);
 
-
                         // Create type string
                         $types = 'sisssiiii'; // First 9 parameters (5 strings, 4 integers)
 
@@ -403,21 +402,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
 
                         mysqli_stmt_bind_param($updateQuery, $types, ...$params);
 
-                        if (mysqli_stmt_execute($updateQuery)) {
-                            $msg = "Draft updated successfully";
+                        // DEBUG: Verify counts match
+                        error_log("Type string: $types (length: " . strlen($types) . ")");
+                        error_log("Params count: " . count($params));
+                        error_log("Params: " . print_r($params, true));
 
-                            // Create thumbnail if new image was uploaded
-                            if ($imgnewfile) {
-                                try {
-                                    $resizeObj = new resize("images/postimages/" . $imgnewfile);
-                                    $resizeObj->resizeImage(300, 200, 'exact');
-                                    $resizeObj->saveImage("images/thumb/" . $imgnewfile, 100);
-                                } catch (Exception $e) {
-                                    error_log("Thumbnail creation failed: " . $e->getMessage());
-                                }
+                        if (strlen($types) !== count($params)) {
+                            $error = "Parameter count mismatch. Types: " . strlen($types) . ", Params: " . count($params);
+                            error_log($error);
+                            if ($isAutoSave) {
+                                ob_end_clean();
+                                header('Content-Type: application/json');
+                                echo json_encode(['success' => false, 'message' => $error]);
+                                exit;
                             }
                         } else {
-                            $error = "Database error: " . mysqli_error($con);
+                            mysqli_stmt_bind_param($updateQuery, $types, ...$params);
+
+                            if (mysqli_stmt_execute($updateQuery)) {
+                                $msg = "Draft updated successfully";
+                                error_log("Draft updated. ID: " . $postId);
+                            } else {
+                                $error = "Database error: " . mysqli_error($con);
+                            }
                         }
                     } else {
                         // Insert new post/draft
