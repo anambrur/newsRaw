@@ -323,19 +323,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                         }
                     }
                     // Check if we're updating an existing draft
-                    // Check if we're updating an existing draft
                     elseif ($postId > 0 && $status == 2) {
                         // Update existing draft
                         $query = "UPDATE tblposts SET 
-        PostTitle = ?, 
-        CategoryId = ?, 
-        PostDetails = ?, 
-        PostUrl = ?, 
-        On_Slider = ?, 
-        On_Sportlingt = ?, 
-        On_Article = ?, 
-        On_Gfeed = ?, 
-        On_Save = ?";
+                            PostTitle = ?, 
+                            CategoryId = ?, 
+                            PostDetails = ?, 
+                            PostUrl = ?, 
+                            On_Slider = ?, 
+                            On_Sportlingt = ?, 
+                            On_Article = ?, 
+                            On_Gfeed = ?, 
+                            On_Save = ?";
 
                         // Add PostImage to query if new file was uploaded
                         if ($imgnewfile) {
@@ -343,17 +342,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                         }
 
                         $query .= ", repoter = ?, 
-        reporterName = ?, 
-        source = ?, 
-        subtitle = ?, 
-        photocap = ?, 
-        seoshort = ?, 
-        imageseo = ?, 
-        seomkey = ?, 
-        UpdationDate = ?, 
-        ScheduledPublish = ?,
-        IsAutosave = ?
-    WHERE id = ?";
+                            reporterName = ?, 
+                            source = ?, 
+                            subtitle = ?, 
+                            photocap = ?, 
+                            seoshort = ?, 
+                            imageseo = ?, 
+                            seomkey = ?, 
+                            UpdationDate = ?, 
+                            ScheduledPublish = ?,
+                            IsAutosave = ?
+                        WHERE id = ?";
 
                         $updateQuery = mysqli_prepare($con, $query);
 
@@ -391,26 +390,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                             $postId            // i
                         ]);
 
-                        // Create type string dynamically
-                        $types = '';
+                        // Create type string
+                        $types = 'sisssiiii'; // First 9 parameters (5 strings, 4 integers)
 
-                        // First 9 parameters (5 strings, 4 integers)
-                        $types .= 'sisssiiii';
-
-                        // Add image type if exists (1 string)
                         if ($imgnewfile) {
-                            $types .= 's';
+                            $types .= 's';    // Add 1 string for image if exists
                         }
 
-                        // Remaining parameters (7 strings, 5 integers)
-                        $types .= 'issssssssii';
+                        // Add types for remaining parameters
+                        // repoter (i), reporterName (s), source (s), subtitle (s), photocap (s), 
+                        // seoshort (s), imageseo (s), seomkey (s), UpdationDate (s), 
+                        // ScheduledPublish (s), IsAutosave (i), id (i)
+                        $types .= 'issssssssii'; // 7 strings, 5 integers
 
-                        // Debug output (you can remove this after testing)
-                        error_log("Type string: $types (length: " . strlen($types) . ")");
-                        error_log("Params count: " . count($params));
-
+                        // Verify counts
+                        $expectedParamCount = 9 + ($imgnewfile ? 1 : 0) + 12;
                         if (strlen($types) !== count($params)) {
-                            $error = "Parameter count mismatch. Types: " . strlen($types) . ", Params: " . count($params);
+                            $error = "Parameter count mismatch. Types: " . strlen($types) . " ($types), Params: " . count($params) .
+                                "\nExpected: $expectedParamCount\n" .
+                                "Params: " . print_r($params, true);
                             error_log($error);
                             if ($isAutoSave) {
                                 ob_end_clean();
@@ -424,7 +422,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
 
                         if (mysqli_stmt_execute($updateQuery)) {
                             $msg = "Draft updated successfully";
-                            error_log("Draft updated. ID: " . $postId);
                         } else {
                             $error = "Database error: " . mysqli_error($con);
                         }
