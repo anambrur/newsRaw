@@ -334,9 +334,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                             On_Sportlingt = ?, 
                             On_Article = ?, 
                             On_Gfeed = ?, 
-                            On_Save = ?, " .
-                            ($imgnewfile ? "PostImage = ?, " : "") . "
-                            repoter = ?, 
+                            On_Save = ?";
+
+                        // Add PostImage to query if new file was uploaded
+                        if ($imgnewfile) {
+                            $query .= ", PostImage = ?";
+                        }
+
+                        $query .= ", repoter = ?, 
                             reporterName = ?, 
                             source = ?, 
                             subtitle = ?, 
@@ -353,8 +358,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
 
                         // Prepare parameters
                         $params = [
-                            $posttitle,        // s
-                            $catid,            // i
+                            $posttitle,        // s (string)
+                            $catid,            // i (integer)
                             $postdetails,      // s
                             $url,              // s
                             $On_Slider,        // i
@@ -364,10 +369,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                             $On_Save           // i
                         ];
 
+                        // Add image if exists
                         if ($imgnewfile) {
                             $params[] = $imgnewfile;  // s
                         }
 
+                        // Add remaining parameters
                         $params = array_merge($params, [
                             $reporter,         // i
                             $reporterName,     // s
@@ -383,15 +390,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                             $postId            // i
                         ]);
 
+
                         // Create type string
-                        $types = 'sisssiiii'; // 9 parameters (5 strings, 4 integers)
+                        $types = 'sisssiiii'; // First 9 parameters (5 strings, 4 integers)
 
                         if ($imgnewfile) {
-                            $types .= 's';    // +1 string for image
+                            $types .= 's';    // Add 1 string for image if exists
                         }
 
-                        // Add types for remaining parameters
-                        $types .= 'issssssssi'; // 11 more parameters (8 strings, 3 integers)
+                        // Add types for remaining 12 parameters
+                        $types .= 'issssssssii'; // (7 strings, 5 integers)
 
                         mysqli_stmt_bind_param($updateQuery, $types, ...$params);
 
