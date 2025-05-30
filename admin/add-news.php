@@ -394,21 +394,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                         $types = 'sisssiiii'; // First 9 parameters (5 strings, 4 integers)
 
                         if ($imgnewfile) {
-                            $types .= 's';    // Add 1 string for image if exists
+                            $types .= 's';
+                            $params[] = $imgnewfile;
                         }
 
-                        // Add types for remaining parameters
-                        // repoter (i), reporterName (s), source (s), subtitle (s), photocap (s), 
-                        // seoshort (s), imageseo (s), seomkey (s), UpdationDate (s), 
-                        // ScheduledPublish (s), IsAutosave (i), id (i)
-                        $types .= 'issssssssii'; // 7 strings, 5 integers
+                        // Last 12 parameters (9 strings, 3 integers)
+                        $types .= 'isssssssssii'; // Note the extra 's' - now 12 chars for last 12 params
 
                         // Verify counts
-                        $expectedParamCount = 9 + ($imgnewfile ? 1 : 0) + 12;
                         if (strlen($types) !== count($params)) {
-                            $error = "Parameter count mismatch. Types: " . strlen($types) . " ($types), Params: " . count($params) .
-                                "\nExpected: $expectedParamCount\n" .
-                                "Params: " . print_r($params, true);
+                            $error = "Final parameter count mismatch. Types: " . strlen($types) . " ($types), Params: " . count($params) .
+                                "\nParams: " . print_r($params, true);
                             error_log($error);
                             if ($isAutoSave) {
                                 ob_end_clean();
