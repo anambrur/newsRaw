@@ -243,8 +243,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                                 On_Sportlingt = ?, 
                                 On_Article = ?, 
                                 On_Gfeed = ?, 
-                                On_Save = ?, " .
-                                ($imgnewfile ? "PostImage = ?, " : "") . "
+                                On_Save = ?,
+                                PostImage = ?,
                                 repoter = ?, 
                                 reporterName = ?, 
                                 source = ?, 
@@ -261,7 +261,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
 
                         // Prepare parameters
                         $params = [
-                            $posttitle,        // s
+                            $posttitle,        // s string
                             $catid,            // i
                             $postdetails,      // s
                             $url,              // s
@@ -270,14 +270,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                             $On_Sportlingt,    // i
                             $On_Article,       // i
                             $On_Gfeed,         // i
-                            $On_Save           // i
-                        ];
-
-                        if ($imgnewfile) {
-                            $params[] = $imgnewfile;  // s
-                        }
-
-                        $params = array_merge($params, [
+                            $On_Save,           // i
+                            $imgnewfile,  // s
                             $reporter,         // i
                             $reporterName,     // s
                             $source,           // s
@@ -289,17 +283,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                             $date,             // s
                             $scheduledPublish, // s
                             $postId            // i
-                        ]);
+                        ];
 
+                    
                         // Create type string
-                        $types = 'sisssiiiii'; // 10 parameters (5 strings, 5 integers)
-
-                        if ($imgnewfile) {
-                            $types .= 's';    // +1 string for image
-                        }
-
-                        // Add types for remaining parameters
-                        $types .= 'issssssssi'; // 10 more parameters (7 strings, 3 integers)
+                        $types = 'sissiiiiiisisssssssssi'; 
 
                         mysqli_stmt_bind_param($updateQuery, $types, ...$params);
 
@@ -382,35 +370,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
 
                         
 
-                        // // Verify parameter counts
-                        // $expectedParams = 21; // Base count without image
-                        // if ($imgnewfile) {
-                        //     $expectedParams = 22; // Count with image
-                        // }
-
-                        // if (count($params) !== $expectedParams) {
-                        //     $error = "Parameter count mismatch. Expected: $expectedParams, Got: " . count($params);
-                        //     error_log($error);
-                        //     error_log("Params: " . print_r($params, true));
-                        //     if ($isAutoSave) {
-                        //         ob_end_clean();
-                        //         header('Content-Type: application/json');
-                        //         echo json_encode(['success' => false, 'message' => $error]);
-                        //         exit;
-                        //     }
-                        // }
-
-                        // // Verify type string length matches parameter count
-                        // if (strlen($types) !== count($params)) {
-                        //     $error = "Type string length mismatch. Types: " . strlen($types) . ", Params: " . count($params);
-                        //     error_log($error);
-                        //     if ($isAutoSave) {
-                        //         ob_end_clean();
-                        //         header('Content-Type: application/json');
-                        //         echo json_encode(['success' => false, 'message' => $error]);
-                        //         exit;
-                        //     }
-                        // }
+                        
 
                         // Bind parameters
                         mysqli_stmt_bind_param($updateQuery, $types, ...$params);
