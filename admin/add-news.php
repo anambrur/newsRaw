@@ -242,6 +242,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                         if ($isAutosave) {
                             $msg .= " (Auto-saved)";
                         }
+                        error_log("Draft saved successfully. ID: " . mysqli_insert_id($con));
 
                         // Create thumbnail if image was uploaded
                         if ($imgnewfile) {
@@ -255,7 +256,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                         }
                     } else {
                         $error = "Database error: " . mysqli_error($con);
-                        error_log("Database error: " . mysqli_error($con));
+                        error_log("Database error details: " . print_r([
+                            'error' => mysqli_error($con),
+                            'errno' => mysqli_errno($con),
+                            'query' => $insertQuery
+                        ], true));
                     }
                 }
             }
@@ -802,18 +807,88 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
             }
 
             // Auto-save function
-            function autoSaveDraft() {
-                if (isAutoSaving || !hasFormChanged()) return;
+            // function autoSaveDraft() {
+            //     if (isAutoSaving || !hasFormChanged()) return;
 
+            //     isAutoSaving = true;
+            //     updateSaveStatus(true);
+
+            //     // First save to localStorage (instant)
+            //     saveToLocalDraft();
+
+            //     // Then try to save to server
+            //     const formData = new FormData();
+            //     const data = collectFormData();
+
+            //     Object.keys(data).forEach(key => {
+            //         formData.append(key, data[key]);
+            //     });
+
+            //     const fileInput = document.getElementById('postimage');
+            //     if (fileInput.files.length > 0) {
+            //         formData.append('postimage', fileInput.files[0]);
+            //     }
+
+            //     formData.append('draft', '1');
+            //     console.log('Form data being sent:', {
+            //         title: data.posttitle,
+            //         category: data.category,
+            //         desc_length: data.postdescription.length,
+            //         hasImage: fileInput.files.length > 0
+            //     });
+
+            //     $.ajax({
+            //         url: window.location.href,
+            //         type: 'POST',
+            //         data: formData,
+            //         processData: false,
+            //         contentType: false,
+            //         // In your autoSaveDraft() function, modify the AJAX success handler:
+            //         success: function(response) {
+            //             console.log('Server response:', response); // Add this line
+            //             if (response && response.success) {
+            //                 lastSavedData = JSON.stringify(data);
+            //                 showAutoSaveNotification('Draft saved to server');
+            //                 clearLocalDraft();
+            //             } else {
+            //                 showAutoSaveNotification(response?.message || 'Draft save failed', true);
+            //             }
+            //             isAutoSaving = false;
+            //             updateSaveStatus(false);
+            //         },
+            //         error: function(xhr, status, error) {
+            //             showAutoSaveNotification('Saved locally (server unavailable)', true);
+            //             isAutoSaving = false;
+            //             updateSaveStatus(false, true);
+            //         }
+            //     });
+            // }
+
+
+            function autoSaveDraft() {
+                if (isAutoSaving) {
+                    console.log('Auto-save already in progress');
+                    return;
+                }
+
+                if (!hasFormChanged()) {
+                    console.log('No changes detected, skipping auto-save');
+                    return;
+                }
+
+                console.log('Starting auto-save...');
                 isAutoSaving = true;
                 updateSaveStatus(true);
 
-                // First save to localStorage (instant)
+                // First save to localStorage
                 saveToLocalDraft();
+                console.log('Local draft saved');
 
-                // Then try to save to server
+                // Prepare FormData
                 const formData = new FormData();
                 const data = collectFormData();
+
+                console.log('Collected form data:', data);
 
                 Object.keys(data).forEach(key => {
                     formData.append(key, data[key]);
@@ -821,10 +896,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
 
                 const fileInput = document.getElementById('postimage');
                 if (fileInput.files.length > 0) {
+                    console.log('Including file in upload:', fileInput.files[0].name);
                     formData.append('postimage', fileInput.files[0]);
+                } else {
+                    console.log('No file selected for upload');
                 }
 
                 formData.append('draft', '1');
+
+                console.log('Sending to server...');
 
                 $.ajax({
                     url: window.location.href,
@@ -832,21 +912,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                     data: formData,
                     processData: false,
                     contentType: false,
-                    success: function(response) {
-                        lastSavedData = JSON.stringify(data);
-                        showAutoSaveNotification('Draft saved to server');
+                    success: function(response, status, xhr) {
+                        console.log('Server response:', {
+                            status: xhr.status,
+                            response: response,
+                            headers: xhr.getAllResponseHeaders()
+                        });
 
-                        // Only clear local draft if server save succeeded
-                        if (response.success) {
+                        if (response && response.success) {
+                            console.log('Server save successful');
+                            lastSavedData = JSON.stringify(data);
+                            showAutoSaveNotification('Draft saved to server');
                             clearLocalDraft();
+                        } else {
+                            console.error('Server reported error:', response?.message);
+                            showAutoSaveNotification(response?.message || 'Draft save failed', true);
                         }
-                        isAutoSaving = false;
-                        updateSaveStatus(false);
                     },
                     error: function(xhr, status, error) {
+                        console.error('AJAX error:', {
+                            status: xhr.status,
+                            error: error,
+                            responseText: xhr.responseText
+                        });
                         showAutoSaveNotification('Saved locally (server unavailable)', true);
+                    },
+                    complete: function() {
+                        console.log('Auto-save completed');
                         isAutoSaving = false;
-                        updateSaveStatus(false, true);
+                        updateSaveStatus(false);
                     }
                 });
             }
