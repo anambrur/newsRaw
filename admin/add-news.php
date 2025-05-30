@@ -336,7 +336,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
         On_Gfeed = ?, 
         On_Save = ?";
 
-                        // Add PostImage to query if new file was uploaded
+                        // Add PostImage to query only if new file was uploaded
                         if ($imgnewfile) {
                             $query .= ", PostImage = ?";
                         }
@@ -356,10 +356,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
 
                         $updateQuery = mysqli_prepare($con, $query);
 
-                        // Prepare parameters - DON'T include $imgnewfile here yet
+                        // Prepare base parameters (always included)
                         $params = [
-                            $posttitle,        // s
-                            $catid,            // i
+                            $posttitle,        // s (string)
+                            $catid,            // i (integer)
                             $postdetails,      // s
                             $url,              // s
                             $On_Slider,        // i
@@ -369,12 +369,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                             $On_Save           // i
                         ];
 
-                        // Add image if exists (only here, not again later)
+                        // Add image parameter only if new file was uploaded
                         if ($imgnewfile) {
                             $params[] = $imgnewfile;  // s
                         }
 
-                        // Add remaining parameters
+                        // Add remaining parameters (always included)
                         $params = array_merge($params, [
                             $reporter,         // i
                             $reporterName,     // s
@@ -390,23 +390,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                             $postId            // i
                         ]);
 
-                        // Create type string
+                        // Build type string
                         $types = 'sisssiiii'; // First 9 parameters (5 strings, 4 integers)
 
+                        // Add image type if exists
                         if ($imgnewfile) {
-                            $types .= 's';    // Add 1 string for image
+                            $types .= 's';    // 1 string for image
                         }
 
-                        // Last 12 parameters (8 strings, 4 integers)
+                        // Add types for remaining 12 parameters (8 strings, 4 integers)
                         $types .= 'issssssssii';
 
-                        // Debug output
-                        error_log("Final type string: $types (length: " . strlen($types) . ")");
-                        error_log("Params count: " . count($params));
-                        error_log("Params: " . print_r($params, true));
+                        // Verify parameter counts
+                        $expectedParams = 21; // Base count without image
+                        if ($imgnewfile) {
+                            $expectedParams = 22; // Count with image
+                        }
 
+                        if (count($params) !== $expectedParams) {
+                            $error = "Parameter count mismatch. Expected: $expectedParams, Got: " . count($params);
+                            error_log($error);
+                            error_log("Params: " . print_r($params, true));
+                            if ($isAutoSave) {
+                                ob_end_clean();
+                                header('Content-Type: application/json');
+                                echo json_encode(['success' => false, 'message' => $error]);
+                                exit;
+                            }
+                        }
+
+                        // Verify type string length matches parameter count
                         if (strlen($types) !== count($params)) {
-                            $error = "Final parameter count mismatch. Types: " . strlen($types) . " ($types), Params: " . count($params);
+                            $error = "Type string length mismatch. Types: " . strlen($types) . ", Params: " . count($params);
                             error_log($error);
                             if ($isAutoSave) {
                                 ob_end_clean();
@@ -416,10 +431,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                             }
                         }
 
+                        // Bind parameters
                         mysqli_stmt_bind_param($updateQuery, $types, ...$params);
 
                         if (mysqli_stmt_execute($updateQuery)) {
                             $msg = "Draft updated successfully";
+                            // Create thumbnail if new image was uploaded
+                            if ($imgnewfile) {
+                                try {
+                                    $resizeObj = new resize("images/postimages/" . $imgnewfile);
+                                    $resizeObj->resizeImage(300, 200, 'exact');
+                                    $resizeObj->saveImage("images/thumb/" . $imgnewfile, 100);
+                                } catch (Exception $e) {
+                                    error_log("Thumbnail creation failed: " . $e->getMessage());
+                                }
+                            }
                         } else {
                             $error = "Database error: " . mysqli_error($con);
                         }
