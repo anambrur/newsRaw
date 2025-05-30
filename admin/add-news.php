@@ -326,33 +326,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                     elseif ($postId > 0 && $status == 2) {
                         // Update existing draft
                         $query = "UPDATE tblposts SET 
-        PostTitle = ?, 
-        CategoryId = ?, 
-        PostDetails = ?, 
-        PostUrl = ?, 
-        On_Slider = ?, 
-        On_Sportlingt = ?, 
-        On_Article = ?, 
-        On_Gfeed = ?, 
-        On_Save = ?";
-
-                        // Add PostImage to query only if new file was uploaded
-                        if ($imgnewfile) {
-                            $query .= ", PostImage = ?";
-                        }
-
-                        $query .= ", repoter = ?, 
-        reporterName = ?, 
-        source = ?, 
-        subtitle = ?, 
-        photocap = ?, 
-        seoshort = ?, 
-        imageseo = ?, 
-        seomkey = ?, 
-        UpdationDate = ?, 
-        ScheduledPublish = ?,
-        IsAutosave = ?
-    WHERE id = ?";
+                            PostTitle = ?, 
+                            CategoryId = ?, 
+                            PostDetails = ?, 
+                            PostUrl = ?, 
+                            On_Slider = ?, 
+                            On_Sportlingt = ?, 
+                            On_Article = ?, 
+                            On_Gfeed = ?, 
+                            On_Save = ?,
+                            PostImage = ?,
+                            repoter = ?, 
+                            reporterName = ?, 
+                            source = ?, 
+                            subtitle = ?, 
+                            photocap = ?, 
+                            seoshort = ?, 
+                            imageseo = ?, 
+                            seomkey = ?, 
+                            UpdationDate = ?, 
+                            ScheduledPublish = ?,
+                            IsAutosave = ?
+                        WHERE id = ?";
 
                         $updateQuery = mysqli_prepare($con, $query);
 
@@ -366,16 +361,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                             $On_Sportlingt,    // i
                             $On_Article,       // i
                             $On_Gfeed,         // i
-                            $On_Save           // i
-                        ];
-
-                        // Add image parameter only if new file was uploaded
-                        if ($imgnewfile) {
-                            $params[] = $imgnewfile;  // s
-                        }
-
-                        // Add remaining parameters (always included)
-                        $params = array_merge($params, [
+                            $On_Save,          // i
+                            $imgnewfile,        // s
                             $reporter,         // i
                             $reporterName,     // s
                             $source,           // s
@@ -388,48 +375,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                             $scheduledPublish, // s
                             $isAutosave,       // i
                             $postId            // i
-                        ]);
+                        ];
 
                         // Build type string
-                        $types = 'sisssiiii'; // First 9 parameters (5 strings, 4 integers)
+                        $types = 'sissiiiiisisssssssssii';
 
-                        // Add image type if exists
-                        if ($imgnewfile) {
-                            $types .= 's';    // 1 string for image
-                        }
+                        
 
-                        // Add types for remaining 12 parameters (8 strings, 4 integers)
-                        $types .= 'issssssssii';
+                        // // Verify parameter counts
+                        // $expectedParams = 21; // Base count without image
+                        // if ($imgnewfile) {
+                        //     $expectedParams = 22; // Count with image
+                        // }
 
-                        // Verify parameter counts
-                        $expectedParams = 21; // Base count without image
-                        if ($imgnewfile) {
-                            $expectedParams = 22; // Count with image
-                        }
+                        // if (count($params) !== $expectedParams) {
+                        //     $error = "Parameter count mismatch. Expected: $expectedParams, Got: " . count($params);
+                        //     error_log($error);
+                        //     error_log("Params: " . print_r($params, true));
+                        //     if ($isAutoSave) {
+                        //         ob_end_clean();
+                        //         header('Content-Type: application/json');
+                        //         echo json_encode(['success' => false, 'message' => $error]);
+                        //         exit;
+                        //     }
+                        // }
 
-                        if (count($params) !== $expectedParams) {
-                            $error = "Parameter count mismatch. Expected: $expectedParams, Got: " . count($params);
-                            error_log($error);
-                            error_log("Params: " . print_r($params, true));
-                            if ($isAutoSave) {
-                                ob_end_clean();
-                                header('Content-Type: application/json');
-                                echo json_encode(['success' => false, 'message' => $error]);
-                                exit;
-                            }
-                        }
-
-                        // Verify type string length matches parameter count
-                        if (strlen($types) !== count($params)) {
-                            $error = "Type string length mismatch. Types: " . strlen($types) . ", Params: " . count($params);
-                            error_log($error);
-                            if ($isAutoSave) {
-                                ob_end_clean();
-                                header('Content-Type: application/json');
-                                echo json_encode(['success' => false, 'message' => $error]);
-                                exit;
-                            }
-                        }
+                        // // Verify type string length matches parameter count
+                        // if (strlen($types) !== count($params)) {
+                        //     $error = "Type string length mismatch. Types: " . strlen($types) . ", Params: " . count($params);
+                        //     error_log($error);
+                        //     if ($isAutoSave) {
+                        //         ob_end_clean();
+                        //         header('Content-Type: application/json');
+                        //         echo json_encode(['success' => false, 'message' => $error]);
+                        //         exit;
+                        //     }
+                        // }
 
                         // Bind parameters
                         mysqli_stmt_bind_param($updateQuery, $types, ...$params);
