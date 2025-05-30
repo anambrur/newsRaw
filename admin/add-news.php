@@ -326,15 +326,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                     elseif ($postId > 0 && $status == 2) {
                         // Update existing draft
                         $query = "UPDATE tblposts SET 
-                            PostTitle = ?, 
-                            CategoryId = ?, 
-                            PostDetails = ?, 
-                            PostUrl = ?, 
-                            On_Slider = ?, 
-                            On_Sportlingt = ?, 
-                            On_Article = ?, 
-                            On_Gfeed = ?, 
-                            On_Save = ?";
+        PostTitle = ?, 
+        CategoryId = ?, 
+        PostDetails = ?, 
+        PostUrl = ?, 
+        On_Slider = ?, 
+        On_Sportlingt = ?, 
+        On_Article = ?, 
+        On_Gfeed = ?, 
+        On_Save = ?";
 
                         // Add PostImage to query if new file was uploaded
                         if ($imgnewfile) {
@@ -342,24 +342,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                         }
 
                         $query .= ", repoter = ?, 
-                            reporterName = ?, 
-                            source = ?, 
-                            subtitle = ?, 
-                            photocap = ?, 
-                            seoshort = ?, 
-                            imageseo = ?, 
-                            seomkey = ?, 
-                            UpdationDate = ?, 
-                            ScheduledPublish = ?,
-                            IsAutosave = ?
-                        WHERE id = ?";
+        reporterName = ?, 
+        source = ?, 
+        subtitle = ?, 
+        photocap = ?, 
+        seoshort = ?, 
+        imageseo = ?, 
+        seomkey = ?, 
+        UpdationDate = ?, 
+        ScheduledPublish = ?,
+        IsAutosave = ?
+    WHERE id = ?";
 
                         $updateQuery = mysqli_prepare($con, $query);
 
-                        // Prepare parameters
+                        // Prepare parameters - DON'T include $imgnewfile here yet
                         $params = [
-                            $posttitle,        // s (string)
-                            $catid,            // i (integer)
+                            $posttitle,        // s
+                            $catid,            // i
                             $postdetails,      // s
                             $url,              // s
                             $On_Slider,        // i
@@ -369,7 +369,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                             $On_Save           // i
                         ];
 
-                        // Add image if exists
+                        // Add image if exists (only here, not again later)
                         if ($imgnewfile) {
                             $params[] = $imgnewfile;  // s
                         }
@@ -394,17 +394,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                         $types = 'sisssiiii'; // First 9 parameters (5 strings, 4 integers)
 
                         if ($imgnewfile) {
-                            $types .= 's';
-                            $params[] = $imgnewfile;
+                            $types .= 's';    // Add 1 string for image
                         }
 
-                        // Last 12 parameters (9 strings, 3 integers)
-                        $types .= 'isssssssssii'; // Note the extra 's' - now 12 chars for last 12 params
+                        // Last 12 parameters (8 strings, 4 integers)
+                        $types .= 'issssssssii';
 
-                        // Verify counts
+                        // Debug output
+                        error_log("Final type string: $types (length: " . strlen($types) . ")");
+                        error_log("Params count: " . count($params));
+                        error_log("Params: " . print_r($params, true));
+
                         if (strlen($types) !== count($params)) {
-                            $error = "Final parameter count mismatch. Types: " . strlen($types) . " ($types), Params: " . count($params) .
-                                "\nParams: " . print_r($params, true);
+                            $error = "Final parameter count mismatch. Types: " . strlen($types) . " ($types), Params: " . count($params);
                             error_log($error);
                             if ($isAutoSave) {
                                 ob_end_clean();
