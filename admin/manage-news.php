@@ -312,7 +312,7 @@ if ($searchQuery != '') {
                         <a href="../news-details?nid=<?php echo htmlentities($row['postid']); ?>" target="_blank" class="btn btn-sm btn-info">View</a>
                         <a href="edit-news.php?pid=<?php echo htmlentities($row['postid']); ?>" class="btn btn-sm btn-primary">Edit</a>
                         <?php if ($row['status'] != STATUS_BIN): ?>
-                          <a href="manage-news.php?pid=<?php echo htmlentities($row['postid']); ?>&action=del" onclick="return confirm('Your News will be moved to trash')" class="btn btn-sm btn-danger">Move To Bin</a>
+                          <a href="#" data-postid="<?php echo htmlentities($row['postid']); ?>" class="btn btn-sm btn-danger move-to-bin">Move To Bin</a>
                         <?php else: ?>
                           <a href="restore-post.php?pid=<?php echo htmlentities($row['postid']); ?>" class="btn btn-sm btn-success">Restore</a>
                         <?php endif; ?>
@@ -424,7 +424,7 @@ if ($searchQuery != '') {
   <!-- App js -->
   <script src="assets/js/jquery.core.js"></script>
   <script src="assets/js/jquery.app.js"></script>
-  
+
   <!-- SweetAlert2 JS -->
   <script src="assets/js/sweetalert2@11.js"></script>
 
@@ -441,6 +441,28 @@ if ($searchQuery != '') {
 
       $(".select2-limiting").select2({
         maximumSelectionLength: 2
+      });
+
+
+      $('.move-to-bin').click(function(e) {
+        e.preventDefault();
+        var postId = $(this).data('postid');
+        var button = $(this);
+
+        Swal.fire({
+          title: 'Move to Trash?',
+          text: "Your news will be moved to trash",
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#d33',
+          cancelButtonColor: '#3085d6',
+          confirmButtonText: 'Yes, move to trash!',
+          cancelButtonText: 'Cancel'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            window.location.href = 'manage-news.php?pid=' + postId + '&action=del';
+          }
+        });
       });
 
       function showAlert(icon, title) {
