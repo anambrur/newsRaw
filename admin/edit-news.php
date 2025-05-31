@@ -503,32 +503,26 @@ if (strlen($_SESSION['login']) == 0) {
                     $('#reporter').val('').removeAttr('required');
                 }
 
-                // Handle form submission for both buttons
-                $('form[name="addpost"]').on('click', 'button[type="submit"]', function(e) {
-                    var buttonValue = $(this).val();
+                // SweetAlert confirmation for publish button
+                $('button[value="publish"]').click(function(e) {
+                    e.preventDefault();
+                    var form = $(this).closest('form');
 
-                    // Only show confirmation for publish button
-                    if (buttonValue === 'publish') {
-                        e.preventDefault();
-                        var form = $(this).closest('form');
-
-                        Swal.fire({
-                            title: 'Publish Post?',
-                            text: "Are you sure you want to publish this post?",
-                            icon: 'question',
-                            showCancelButton: true,
-                            confirmButtonColor: '#3085d6',
-                            cancelButtonColor: '#d33',
-                            confirmButtonText: 'Yes, publish it!'
-                        }).then((result) => {
-                            if (result.isConfirmed) {
-                                // Add a hidden field to ensure the value is submitted
-                                form.append('<input type="hidden" name="update" value="publish">');
-                                form.submit();
-                            }
-                        });
-                    }
-                    // For draft button, let it submit normally
+                    Swal.fire({
+                        title: 'Publish Post?',
+                        text: "Are you sure you want to publish this post?",
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#d33',
+                        confirmButtonText: 'Yes, publish it!'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // Add a hidden field to ensure the value is submitted
+                            form.append('<input type="hidden" name="update" value="publish">');
+                            form.submit();
+                        }
+                    });
                 });
             });
         </script>
