@@ -240,15 +240,32 @@ if (strlen($_SESSION['login']) == 0) {
                                 <div class="col-sm-6">
                                     <!--Success Message-->
                                     <?php if ($msg) { ?>
-                                        <div class="alert alert-success" role="alert">
+                                        <div class="alert alert-success alert-dismissible fade show" role="alert" id="successAlert">
                                             <strong>Well done!</strong> <?php echo htmlentities($msg); ?>
+                                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                                         </div>
+                                        <script>
+                                            setTimeout(function() {
+                                                $('#successAlert').fadeOut('slow', function() {
+                                                    $(this).alert('close');
+                                                });
+                                            }, 5000);
+                                        </script>
                                     <?php } ?>
+
                                     <!--Error Message-->
                                     <?php if ($error) { ?>
-                                        <div class="alert alert-danger" role="alert">
+                                        <div class="alert alert-danger alert-dismissible fade show" role="alert" id="errorAlert">
                                             <strong>Oh snap!</strong> <?php echo htmlentities($error); ?>
+                                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                                         </div>
+                                        <script>
+                                            setTimeout(function() {
+                                                $('#errorAlert').fadeOut('slow', function() {
+                                                    $(this).alert('close');
+                                                });
+                                            }, 5000);
+                                        </script>
                                     <?php } ?>
                                 </div>
                             </div>
