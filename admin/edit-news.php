@@ -240,34 +240,34 @@ if (strlen($_SESSION['login']) == 0) {
                                 <div class="col-sm-6">
                                     <!--Success Message-->
                                     <?php if ($msg) { ?>
-                                        <div class="alert alert-success alert-dismissible fade show" role="alert" id="successAlert">
+                                        <div class="alert alert-success alert-dismissible fade show auto-dismiss" role="alert">
                                             <strong>Well done!</strong> <?php echo htmlentities($msg); ?>
                                             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                                         </div>
-                                        <script>
-                                            setTimeout(function() {
-                                                $('#successAlert').fadeOut('slow', function() {
-                                                    $(this).alert('close');
-                                                });
-                                            }, 5000);
-                                        </script>
                                     <?php } ?>
 
                                     <!--Error Message-->
                                     <?php if ($error) { ?>
-                                        <div class="alert alert-danger alert-dismissible fade show" role="alert" id="errorAlert">
+                                        <div class="alert alert-danger alert-dismissible fade show auto-dismiss" role="alert">
                                             <strong>Oh snap!</strong> <?php echo htmlentities($error); ?>
                                             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                                         </div>
-                                        <script>
-                                            setTimeout(function() {
-                                                $('#errorAlert').fadeOut('slow', function() {
-                                                    $(this).alert('close');
-                                                });
-                                            }, 5000);
-                                        </script>
                                     <?php } ?>
                                 </div>
+
+                                <script>
+                                    $(document).ready(function() {
+                                        // Auto-dismiss alerts after 5 seconds
+                                        $('.auto-dismiss').each(function() {
+                                            var $alert = $(this);
+                                            setTimeout(function() {
+                                                $alert.fadeOut('slow', function() {
+                                                    $alert.alert('close');
+                                                });
+                                            }, 5000);
+                                        });
+                                    });
+                                </script>
                             </div>
                             <?php
                             $postid = intval($_GET['pid']);
