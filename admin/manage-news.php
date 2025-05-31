@@ -424,8 +424,9 @@ if ($searchQuery != '') {
   <!-- App js -->
   <script src="assets/js/jquery.core.js"></script>
   <script src="assets/js/jquery.app.js"></script>
+  
   <!-- SweetAlert2 JS -->
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="assets/js/sweetalert2@11.js"></script>
 
   <script>
     jQuery(document).ready(function() {

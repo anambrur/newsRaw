@@ -43,7 +43,14 @@ if (strlen($_SESSION['login']) == 0) {
 
         $arr = explode(" ", $posttitle);
         $url = implode("-", $arr);
-        $status = 1;
+
+        // Determine status based on which button was clicked
+        if ($_POST['update'] == 'publish') {
+            $status = 1; // Active
+        } elseif ($_POST['update'] == 'draft') {
+            $status = 2; // Draft
+        }
+
         $postid = intval($_GET['pid']);
 
 
@@ -173,7 +180,7 @@ if (strlen($_SESSION['login']) == 0) {
         <link href="../plugins/summernote/summernote.css" rel="stylesheet" />
         <link href="../plugins/jquery.filer/css/jquery.filer.css" rel="stylesheet" />
         <link href="../plugins/jquery.filer/css/themes/jquery.filer-dragdropbox-theme.css" rel="stylesheet" />
-        <link href="../plugins/select2/css/select2.min.css" rel="stylesheet" type="text/css"/>
+        <link href="../plugins/select2/css/select2.min.css" rel="stylesheet" type="text/css" />
         <!-- App css -->
         <link href="assets/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
         <link rel="stylesheet" href="../plugins/switchery/switchery.min.css">
@@ -456,7 +463,9 @@ if (strlen($_SESSION['login']) == 0) {
                                         </div>
 
                                     <?php } ?>
-                                    <button type="submit" name="update" class="btn btn-success waves-effect waves-light"> Update Post </button>
+
+                                    <button type="submit" name="update" value="publish" class="btn btn-success waves-effect waves-light"> Update & Publish </button>
+                                    <button type="submit" name="update" value="draft" class="btn btn-primary waves-effect waves-light"> Save as Draft </button>
                                     </div>
                                 </div>
                         </div>
@@ -466,12 +475,11 @@ if (strlen($_SESSION['login']) == 0) {
         </div>
         <!-- [ Main Content ] end -->
         <?php include('includes/footer.php'); ?>
-
+        </div>
         </div>
 
-        </div>
-
-
+        <!-- SweetAlert2 JS -->
+        <script src="assets/js/sweetalert2@11.js"></script>
         <script>
             $(document).ready(function() {
                 // Toggle between dropdown and static reporter
@@ -494,9 +502,28 @@ if (strlen($_SESSION['login']) == 0) {
                     $('#staticReporterContainer').show();
                     $('#reporter').val('').removeAttr('required');
                 }
+
+                // SweetAlert confirmation for publish button
+                $('button[value="publish"]').click(function(e) {
+                    e.preventDefault();
+                    var form = $(this).closest('form');
+
+                    Swal.fire({
+                        title: 'Publish Post?',
+                        text: "Are you sure you want to publish this post?",
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#d33',
+                        confirmButtonText: 'Yes, publish it!'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            form.submit();
+                        }
+                    });
+                });
             });
         </script>
-
     </body>
 
     </html>
