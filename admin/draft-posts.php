@@ -167,7 +167,6 @@ if (strlen($_SESSION['login']) == 0) {
                                 <a href="edit-news.php?pid=<?php echo htmlentities($row['postid']); ?>">
                                   <button type="button" class="btn btn-primary">Edit Post</button>
                                 </a>
-                                nbsp;
                                 <a href="recyclebin.php?presid=<?php echo htmlentities($row['postid']); ?>&&action=perdel" onclick="return confirm('Do you really want to delete ?')"><button type="button" class="btn btn-danger">Delete This Post</button></a>
                               </td>
                             </tr>
