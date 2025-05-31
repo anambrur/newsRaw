@@ -164,8 +164,6 @@ if (strlen($_SESSION['login']) == 0) {
                               </td>
 
                               <td>
-                                <a href="recyclebin.php?pid=<?php echo htmlentities($row['postid']); ?>&&action=restore" onclick="return confirm('Do you really want to move in live news ?')"> <button type="button" class="btn btn-warning">Move To Live News</button> </a>
-                                &nbsp;
                                 <a href="edit-news.php?pid=<?php echo htmlentities($row['postid']); ?>">
                                   <button type="button" class="btn btn-primary">Edit Post</button>
                                 </a>

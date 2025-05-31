@@ -10,7 +10,7 @@ if (strlen($_SESSION['login']) == 0) {
     $postid = intval($_GET['pid']);
     $query = mysqli_query($con, "update tblposts set Is_Active=2 where id='$postid'");
     if ($query) {
-      $msg = "Post restored successfully ";
+      $msg = "Post restored successfully in draft";
     } else {
       $error = "Something went wrong . Please try again.";
     }
