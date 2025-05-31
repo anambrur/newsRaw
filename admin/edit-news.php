@@ -503,26 +503,35 @@ if (strlen($_SESSION['login']) == 0) {
                     $('#reporter').val('').removeAttr('required');
                 }
 
-                // SweetAlert confirmation for publish button
-                $('button[value="publish"]').click(function(e) {
-                    e.preventDefault();
-                    var form = $(this).closest('form');
+                // Handle form submission
+                $('form[name="addpost"]').submit(function(e) {
+                    // Get which button was clicked
+                    var clickedButton = $(document.activeElement);
 
-                    Swal.fire({
-                        title: 'Publish Post?',
-                        text: "Are you sure you want to publish this post?",
-                        icon: 'question',
-                        showCancelButton: true,
-                        confirmButtonColor: '#3085d6',
-                        cancelButtonColor: '#d33',
-                        confirmButtonText: 'Yes, publish it!'
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            // Add a hidden field to ensure the value is submitted
-                            form.append('<input type="hidden" name="update" value="publish">');
-                            form.submit();
-                        }
-                    });
+                    // Only intercept if it's the publish button
+                    if (clickedButton.val() === 'publish') {
+                        e.preventDefault();
+
+                        Swal.fire({
+                            title: 'Publish Post?',
+                            text: "Are you sure you want to publish this post?",
+                            icon: 'question',
+                            showCancelButton: true,
+                            confirmButtonColor: '#3085d6',
+                            cancelButtonColor: '#d33',
+                            confirmButtonText: 'Yes, publish it!'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                // Remove any existing hidden input to avoid duplicates
+                                $('input[name="update"][type="hidden"]').remove();
+                                // Add hidden input to ensure correct value is submitted
+                                $(this).append('<input type="hidden" name="update" value="publish">');
+                                // Submit the form
+                                $(this).unbind('submit').submit();
+                            }
+                        });
+                    }
+                    // For draft button, let it submit normally
                 });
             });
         </script>
