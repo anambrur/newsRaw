@@ -8,7 +8,7 @@ if (strlen($_SESSION['login']) == 0) {
 
   if ($_GET['action'] = 'restore') {
     $postid = intval($_GET['pid']);
-    $query = mysqli_query($con, "update tblposts set Is_Active=1 where id='$postid'");
+    $query = mysqli_query($con, "update tblposts set Is_Active=2 where id='$postid'");
     if ($query) {
       $msg = "Post restored successfully ";
     } else {
