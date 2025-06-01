@@ -11,6 +11,7 @@ if (strlen($_SESSION['login']) == 0) {
     $query = mysqli_query($con, "update tblposts set Is_Active=1 where id='$postid'");
     if ($query) {
       $msg = "Post restored successfully in draft";
+      header('location:draft-posts.php');
     } else {
       $error = "Something went wrong . Please try again.";
     }
