@@ -1,16 +1,5 @@
 <?php
-ob_start();
-session_start();
-include('includes/config.php');
-include('includes/resizeLib.php');
-
-// Error reporting configuration
-
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-ini_set('log_errors', 1);
-ini_set('error_log', __DIR__ . '/php_errors.log');
-// Ensure sessions work properly
+// Session configuration MUST come before session_start()
 ini_set('session.cookie_httponly', 1);
 ini_set('session.cookie_secure', 1); // If using HTTPS
 ini_set('session.use_strict_mode', 1);
@@ -22,6 +11,17 @@ session_set_cookie_params([
     'httponly' => true,
     'samesite' => 'Strict'
 ]);
+session_start();
+ob_start();
+include('includes/config.php');
+include('includes/resizeLib.php');
+
+// Error reporting configuration
+
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/php_errors.log');
 
 // Constants
 define('DRAFT_KEY', 'news_draft_' . basename(__FILE__));
