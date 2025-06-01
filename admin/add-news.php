@@ -285,9 +285,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                             $postId            // i
                         ];
 
-
+                    
                         // Create type string
-                        $types = 'sissiiiiiisisssssssssi';
+                        $types = 'sissiiiiiisisssssssssi'; 
 
                         mysqli_stmt_bind_param($updateQuery, $types, ...$params);
 
@@ -306,10 +306,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                                     error_log("Thumbnail creation failed: " . $e->getMessage());
                                 }
                             }
-
-                            // Redirect to prevent form resubmission
-                            header("Location: add-news.php");
-                            exit();
                         } else {
                             $error = "Database error: " . mysqli_error($con);
                         }
@@ -372,9 +368,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                         // Build type string
                         $types = 'sissiiiiisisssssssssii';
 
+                        
 
-
-
+                        
 
                         // Bind parameters
                         mysqli_stmt_bind_param($updateQuery, $types, ...$params);
@@ -449,10 +445,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                                     error_log("Thumbnail creation failed: " . $e->getMessage());
                                 }
                             }
-
-                            // Redirect to prevent form resubmission
-                            header("Location: add-news.php");
-                            exit();
                         } else {
                             $error = "Database error: " . mysqli_error($con);
                         }
