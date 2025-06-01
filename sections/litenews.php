@@ -24,7 +24,7 @@
                     <div class="row">
                          <?php
                          $db->exec("set names utf8");
-                         $result = $db->prepare("SELECT * FROM tblposts WHERE On_Slider = 1 AND Is_Active = 1 ORDER BY id DESC LIMIT 0, 1");
+                         $result = $db->prepare("SELECT * FROM tblposts WHERE On_Slider = 1 AND Is_Active = 1 ORDER BY UpdationDate DESC LIMIT 0, 1");
                          $result->execute();
                          for ($i = 0; $row = $result->fetch(); $i++) {
                               $text = $row['PostDetails'];
@@ -58,7 +58,7 @@
                               <div class="DLeadSide">
                                    <?php
                                    $db->exec("set names utf8");
-                                   $result = $db->prepare("SELECT * FROM tblposts WHERE On_Slider = 1 AND Is_Active = 1 ORDER BY id DESC LIMIT 1, 2");
+                                   $result = $db->prepare("SELECT * FROM tblposts WHERE On_Slider = 1 AND Is_Active = 1 ORDER BY UpdationDate DESC LIMIT 1, 2");
                                    $result->execute();
                                    for ($i = 0; $row = $result->fetch(); $i++) {
                                         $text = $row['PostDetails'];
@@ -83,7 +83,7 @@
 
                          <?php
                          $db->exec("set names utf8");
-                         $result = $db->prepare("SELECT * FROM tblposts WHERE On_Sportlingt = 1 AND Is_Active = 1 ORDER BY id DESC LIMIT 0, 3");
+                         $result = $db->prepare("SELECT * FROM tblposts WHERE On_Sportlingt = 1 AND Is_Active = 1 ORDER BY UpdationDate DESC LIMIT 0, 3");
                          $result->execute();
                          for ($i = 0; $row = $result->fetch(); $i++) {
                               $text = $row['PostDetails'];
@@ -126,7 +126,7 @@
                     <section class="DLPSTab2 mt-0">
                          <?php
                          $db->exec("set names utf8");
-                         $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 1 AND Is_Active = 1 ORDER BY id DESC LIMIT 0, 6");
+                         $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 1 AND Is_Active = 1 ORDER BY UpdationDate DESC LIMIT 0, 6");
                          $result->execute();
                          for ($i = 0; $row = $result->fetch(); $i++) {
                               $text = $row['PostDetails'];
@@ -198,7 +198,7 @@
 
                          <?php
                          $db->exec("set names utf8");
-                         $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 24 AND Is_Active = 1 ORDER BY id DESC LIMIT 0, 2");
+                         $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 24 AND Is_Active = 1 ORDER BY UpdationDate DESC LIMIT 0, 2");
                          $result->execute();
                          for ($i = 0; $row = $result->fetch(); $i++) {
                               $text = $row['PostDetails'];
@@ -274,7 +274,7 @@ if ($on_live == 0) {
                <div class="row">
                     <?php
                     $db->exec("set names utf8");
-                    $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 22 AND Is_Active = 1 ORDER BY id DESC LIMIT 0, 8");
+                    $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 22 AND Is_Active = 1 ORDER BY UpdationDate DESC LIMIT 0, 8");
                     $result->execute();
                     for ($i = 0; $row = $result->fetch(); $i++) {
                          $text = $row['PostDetails'];
@@ -367,7 +367,7 @@ if ($on_live == 0) {
                     <div class="row">
                          <?php
                          $db->exec("set names utf8");
-                         $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 2 AND Is_Active = 1 ORDER BY id DESC LIMIT 0, 1");
+                         $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 2 AND Is_Active = 1 ORDER BY UpdationDate DESC LIMIT 0, 1");
                          $result->execute();
                          for ($i = 0; $row = $result->fetch(); $i++) {
                               $text = $row['PostDetails'];
@@ -399,7 +399,7 @@ if ($on_live == 0) {
 
                          <?php
                          $db->exec("set names utf8");
-                         $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 2 AND Is_Active = 1 ORDER BY id DESC LIMIT 1, 4");
+                         $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 2 AND Is_Active = 1 ORDER BY UpdationDate DESC LIMIT 1, 4");
                          $result->execute();
                          for ($i = 0; $row = $result->fetch(); $i++) {
                               $text = $row['PostDetails'];
@@ -444,7 +444,7 @@ if ($on_live == 0) {
                     <div class="row">
                          <?php
                          $db->exec("set names utf8");
-                         $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 3 AND Is_Active = 1 ORDER BY id DESC LIMIT 0, 1");
+                         $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 3 AND Is_Active = 1 ORDER BY UpdationDate DESC LIMIT 0, 1");
                          $result->execute();
                          for ($i = 0; $row = $result->fetch(); $i++) {
                               $text = $row['PostDetails'];
@@ -478,7 +478,7 @@ if ($on_live == 0) {
 
                          <?php
                          $db->exec("set names utf8");
-                         $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 3 AND Is_Active = 1 ORDER BY id DESC LIMIT 1, 4");
+                         $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 3 AND Is_Active = 1 ORDER BY UpdationDate DESC LIMIT 1, 4");
                          $result->execute();
                          for ($i = 0; $row = $result->fetch(); $i++) {
                               $text = $row['PostDetails'];
@@ -573,7 +573,7 @@ if ($on_live == 0) {
                                         <div class="col-lg-6 col-sm-12 border-right-inner1">
                                              <?php
                                              $db->exec("set names utf8");
-                                             $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 4 AND Is_Active = 1 ORDER BY id DESC LIMIT 0, 1");
+                                             $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 4 AND Is_Active = 1 ORDER BY UpdationDate DESC LIMIT 0, 1");
                                              $result->execute();
                                              for ($i = 0; $row = $result->fetch(); $i++) {
                                                   $text = $row['PostDetails'];
@@ -605,7 +605,7 @@ if ($on_live == 0) {
                                              <div class="DHighLightedList2">
                                                   <?php
                                                   $db->exec("set names utf8");
-                                                  $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 4 AND Is_Active = 1 ORDER BY id DESC LIMIT 1, 4");
+                                                  $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 4 AND Is_Active = 1 ORDER BY UpdationDate DESC LIMIT 1, 4");
                                                   $result->execute();
                                                   for ($i = 0; $row = $result->fetch(); $i++) {
                                                        $text = $row['PostDetails'];
@@ -639,7 +639,7 @@ if ($on_live == 0) {
                                              <div class="DHighLightedList2">
                                                   <?php
                                                   $db->exec("set names utf8");
-                                                  $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 4 AND Is_Active = 1 ORDER BY id DESC LIMIT 5, 4");
+                                                  $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 4 AND Is_Active = 1 ORDER BY UpdationDate DESC LIMIT 5, 4");
                                                   $result->execute();
                                                   for ($i = 0; $row = $result->fetch(); $i++) {
                                                        $text = $row['PostDetails'];
@@ -811,7 +811,7 @@ if ($on_live == 0) {
                     <div class="col-lg-12 col-sm-12 border-right-inner1">
                          <?php
                          $db->exec("set names utf8");
-                         $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 5 AND Is_Active = 1 ORDER BY id DESC LIMIT 0, 1");
+                         $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 5 AND Is_Active = 1 ORDER BY UpdationDate DESC LIMIT 0, 1");
                          $result->execute();
                          for ($i = 0; $row = $result->fetch(); $i++) {
                               $text = $row['PostDetails'];
@@ -842,7 +842,7 @@ if ($on_live == 0) {
 
                          <?php
                          $db->exec("set names utf8");
-                         $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 5 AND Is_Active = 1 ORDER BY id DESC LIMIT 1, 2");
+                         $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 5 AND Is_Active = 1 ORDER BY UpdationDate DESC LIMIT 1, 2");
                          $result->execute();
                          for ($i = 0; $row = $result->fetch(); $i++) {
                               $text = $row['PostDetails'];
@@ -891,7 +891,7 @@ if ($on_live == 0) {
                     <div class="col-lg-12 col-sm-12 border-right-inner1">
                          <?php
                          $db->exec("set names utf8");
-                         $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 11 AND Is_Active = 1 ORDER BY id DESC LIMIT 0, 1");
+                         $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 11 AND Is_Active = 1 ORDER BY UpdationDate DESC LIMIT 0, 1");
                          $result->execute();
                          for ($i = 0; $row = $result->fetch(); $i++) {
                               $text = $row['PostDetails'];
@@ -925,7 +925,7 @@ if ($on_live == 0) {
 
                          <?php
                          $db->exec("set names utf8");
-                         $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 11 AND Is_Active = 1 ORDER BY id DESC LIMIT 1, 2");
+                         $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 11 AND Is_Active = 1 ORDER BY UpdationDate DESC LIMIT 1, 2");
                          $result->execute();
                          for ($i = 0; $row = $result->fetch(); $i++) {
                               $text = $row['PostDetails'];
@@ -968,7 +968,7 @@ if ($on_live == 0) {
                     <div class="col-lg-12 col-sm-12 border-right-inner1">
                          <?php
                          $db->exec("set names utf8");
-                         $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 8 AND Is_Active = 1 ORDER BY id DESC LIMIT 0, 1");
+                         $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 8 AND Is_Active = 1 ORDER BY UpdationDate DESC LIMIT 0, 1");
                          $result->execute();
                          for ($i = 0; $row = $result->fetch(); $i++) {
                               $text = $row['PostDetails'];
@@ -1001,7 +1001,7 @@ if ($on_live == 0) {
 
                          <?php
                          $db->exec("set names utf8");
-                         $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 8 AND Is_Active = 1 ORDER BY id DESC LIMIT 1, 2");
+                         $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 8 AND Is_Active = 1 ORDER BY UpdationDate DESC LIMIT 1, 2");
                          $result->execute();
                          for ($i = 0; $row = $result->fetch(); $i++) {
                               $text = $row['PostDetails'];
@@ -1052,7 +1052,7 @@ if ($on_live == 0) {
                     <div class="col-lg-12 col-sm-12 border-right-inner1">
                          <?php
                          $db->exec("set names utf8");
-                         $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 21 AND Is_Active = 1 ORDER BY id DESC LIMIT 0, 1");
+                         $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 21 AND Is_Active = 1 ORDER BY UpdationDate DESC LIMIT 0, 1");
                          $result->execute();
                          for ($i = 0; $row = $result->fetch(); $i++) {
                               $text = $row['PostDetails'];
@@ -1085,7 +1085,7 @@ if ($on_live == 0) {
 
                          <?php
                          $db->exec("set names utf8");
-                         $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 21 AND Is_Active = 1 ORDER BY id DESC LIMIT 1, 4");
+                         $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 21 AND Is_Active = 1 ORDER BY UpdationDate DESC LIMIT 1, 4");
                          $result->execute();
                          for ($i = 0; $row = $result->fetch(); $i++) {
                               $text = $row['PostDetails'];
@@ -1184,7 +1184,7 @@ if ($on_live == 0) {
                <div class="row">
                     <?php
                     $db->exec("set names utf8");
-                    $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 10 AND Is_Active = 1 ORDER BY id DESC LIMIT 0, 4");
+                    $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 10 AND Is_Active = 1 ORDER BY UpdationDate DESC LIMIT 0, 4");
                     $result->execute();
                     for ($i = 0; $row = $result->fetch(); $i++) {
                          $text = $row['PostDetails'];
@@ -1238,7 +1238,7 @@ if ($on_live == 0) {
                     <div class="col-lg-12 col-sm-12 border-right-inner1">
                          <?php
                          $db->exec("set names utf8");
-                         $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 14 AND Is_Active = 1 ORDER BY id DESC LIMIT 0, 1");
+                         $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 14 AND Is_Active = 1 ORDER BY UpdationDate DESC LIMIT 0, 1");
                          $result->execute();
                          for ($i = 0; $row = $result->fetch(); $i++) {
                               $text = $row['PostDetails'];
@@ -1269,7 +1269,7 @@ if ($on_live == 0) {
 
                          <?php
                          $db->exec("set names utf8");
-                         $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 14 AND Is_Active = 1 ORDER BY id DESC LIMIT 1, 2");
+                         $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 14 AND Is_Active = 1 ORDER BY UpdationDate DESC LIMIT 1, 2");
                          $result->execute();
                          for ($i = 0; $row = $result->fetch(); $i++) {
                               $text = $row['PostDetails'];
@@ -1318,7 +1318,7 @@ if ($on_live == 0) {
                     <div class="col-lg-12 col-sm-12 border-right-inner1">
                          <?php
                          $db->exec("set names utf8");
-                         $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 7 AND Is_Active = 1 ORDER BY id DESC LIMIT 0, 1");
+                         $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 7 AND Is_Active = 1 ORDER BY UpdationDate DESC LIMIT 0, 1");
                          $result->execute();
                          for ($i = 0; $row = $result->fetch(); $i++) {
                               $text = $row['PostDetails'];
@@ -1352,7 +1352,7 @@ if ($on_live == 0) {
 
                          <?php
                          $db->exec("set names utf8");
-                         $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 7 AND Is_Active = 1 ORDER BY id DESC LIMIT 1, 2");
+                         $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 7 AND Is_Active = 1 ORDER BY UpdationDate DESC LIMIT 1, 2");
                          $result->execute();
                          for ($i = 0; $row = $result->fetch(); $i++) {
                               $text = $row['PostDetails'];
@@ -1395,7 +1395,7 @@ if ($on_live == 0) {
                     <div class="col-lg-12 col-sm-12 border-right-inner1">
                          <?php
                          $db->exec("set names utf8");
-                         $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 20 AND Is_Active = 1 ORDER BY id DESC LIMIT 0, 1");
+                         $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 20 AND Is_Active = 1 ORDER BY UpdationDate DESC LIMIT 0, 1");
                          $result->execute();
                          for ($i = 0; $row = $result->fetch(); $i++) {
                               $text = $row['PostDetails'];
@@ -1428,7 +1428,7 @@ if ($on_live == 0) {
 
                          <?php
                          $db->exec("set names utf8");
-                         $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 20 AND Is_Active = 1 ORDER BY id DESC LIMIT 1, 2");
+                         $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 20 AND Is_Active = 1 ORDER BY UpdationDate DESC LIMIT 1, 2");
                          $result->execute();
                          for ($i = 0; $row = $result->fetch(); $i++) {
                               $text = $row['PostDetails'];
@@ -1479,7 +1479,7 @@ if ($on_live == 0) {
                     <div class="col-lg-12 col-sm-12 border-right-inner1">
                          <?php
                          $db->exec("set names utf8");
-                         $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 19 AND Is_Active = 1 ORDER BY id DESC LIMIT 0, 1");
+                         $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 19 AND Is_Active = 1 ORDER BY UpdationDate DESC LIMIT 0, 1");
                          $result->execute();
                          for ($i = 0; $row = $result->fetch(); $i++) {
                               $text = $row['PostDetails'];
@@ -1512,7 +1512,7 @@ if ($on_live == 0) {
 
                          <?php
                          $db->exec("set names utf8");
-                         $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 19 AND Is_Active = 1 ORDER BY id DESC LIMIT 1, 2");
+                         $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 19 AND Is_Active = 1 ORDER BY UpdationDate DESC LIMIT 1, 2");
                          $result->execute();
                          for ($i = 0; $row = $result->fetch(); $i++) {
                               $text = $row['PostDetails'];
@@ -1609,7 +1609,7 @@ if ($on_live == 0) {
                     <div class="col-lg-6 col-sm-12 colresize border-right-inner1" style="width:43%">
                          <?php
                          $db->exec("set names utf8");
-                         $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 9 AND Is_Active = 1 ORDER BY id DESC LIMIT 0, 1");
+                         $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 9 AND Is_Active = 1 ORDER BY UpdationDate DESC LIMIT 0, 1");
                          $result->execute();
                          for ($i = 0; $row = $result->fetch(); $i++) {
                               $text = $row['PostDetails'];
@@ -1638,7 +1638,7 @@ if ($on_live == 0) {
                          <div class="DEntertainmentList">
                               <?php
                               $db->exec("set names utf8");
-                              $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 9 AND Is_Active = 1 ORDER BY id DESC LIMIT 1, 4");
+                              $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 9 AND Is_Active = 1 ORDER BY UpdationDate DESC LIMIT 1, 4");
                               $result->execute();
                               for ($i = 0; $row = $result->fetch(); $i++) {
                                    $text = $row['PostDetails'];
@@ -1671,7 +1671,7 @@ if ($on_live == 0) {
                          <div class="DEntertainmentList">
                               <?php
                               $db->exec("set names utf8");
-                              $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 9 AND Is_Active = 1 ORDER BY id DESC LIMIT 5, 4");
+                              $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 9 AND Is_Active = 1 ORDER BY UpdationDate DESC LIMIT 5, 4");
                               $result->execute();
                               for ($i = 0; $row = $result->fetch(); $i++) {
                                    $text = $row['PostDetails'];
@@ -1743,7 +1743,7 @@ if ($on_live == 0) {
                <div class="col-lg-12 col-sm-12 border-right-inner1">
                     <?php
                     $db->exec("set names utf8");
-                    $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 6 AND Is_Active = 1 ORDER BY id DESC LIMIT 0, 1");
+                    $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 6 AND Is_Active = 1 ORDER BY UpdationDate DESC LIMIT 0, 1");
                     $result->execute();
                     for ($i = 0; $row = $result->fetch(); $i++) {
                          $text = $row['PostDetails'];
@@ -1774,7 +1774,7 @@ if ($on_live == 0) {
 
                     <?php
                     $db->exec("set names utf8");
-                    $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 6 AND Is_Active = 1 ORDER BY id DESC LIMIT 1, 2");
+                    $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 6 AND Is_Active = 1 ORDER BY UpdationDate DESC LIMIT 1, 2");
                     $result->execute();
                     for ($i = 0; $row = $result->fetch(); $i++) {
                          $text = $row['PostDetails'];
@@ -1823,7 +1823,7 @@ if ($on_live == 0) {
                <div class="col-lg-12 col-sm-12 border-right-inner1">
                     <?php
                     $db->exec("set names utf8");
-                    $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 18 AND Is_Active = 1 ORDER BY id DESC LIMIT 0, 1");
+                    $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 18 AND Is_Active = 1 ORDER BY UpdationDate DESC LIMIT 0, 1");
                     $result->execute();
                     for ($i = 0; $row = $result->fetch(); $i++) {
                          $text = $row['PostDetails'];
@@ -1857,7 +1857,7 @@ if ($on_live == 0) {
 
                     <?php
                     $db->exec("set names utf8");
-                    $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 18 AND Is_Active = 1 ORDER BY id DESC LIMIT 1, 2");
+                    $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 18 AND Is_Active = 1 ORDER BY UpdationDate DESC LIMIT 1, 2");
                     $result->execute();
                     for ($i = 0; $row = $result->fetch(); $i++) {
                          $text = $row['PostDetails'];
@@ -1900,7 +1900,7 @@ if ($on_live == 0) {
                <div class="col-lg-12 col-sm-12 border-right-inner1">
                     <?php
                     $db->exec("set names utf8");
-                    $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 16 AND Is_Active = 1 ORDER BY id DESC LIMIT 0, 1");
+                    $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 16 AND Is_Active = 1 ORDER BY UpdationDate DESC LIMIT 0, 1");
                     $result->execute();
                     for ($i = 0; $row = $result->fetch(); $i++) {
                          $text = $row['PostDetails'];
@@ -1933,7 +1933,7 @@ if ($on_live == 0) {
 
                     <?php
                     $db->exec("set names utf8");
-                    $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 16 AND Is_Active = 1 ORDER BY id DESC LIMIT 1, 2");
+                    $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 16 AND Is_Active = 1 ORDER BY UpdationDate DESC LIMIT 1, 2");
                     $result->execute();
                     for ($i = 0; $row = $result->fetch(); $i++) {
                          $text = $row['PostDetails'];
@@ -1984,7 +1984,7 @@ if ($on_live == 0) {
                <div class="col-lg-12 col-sm-12 border-right-inner1">
                     <?php
                     $db->exec("set names utf8");
-                    $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 17 AND Is_Active = 1 ORDER BY id DESC LIMIT 0, 1");
+                    $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 17 AND Is_Active = 1 ORDER BY UpdationDate DESC LIMIT 0, 1");
                     $result->execute();
                     for ($i = 0; $row = $result->fetch(); $i++) {
                          $text = $row['PostDetails'];
@@ -2017,7 +2017,7 @@ if ($on_live == 0) {
 
                     <?php
                     $db->exec("set names utf8");
-                    $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 17 AND Is_Active = 1 ORDER BY id DESC LIMIT 1, 2");
+                    $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 17 AND Is_Active = 1 ORDER BY UpdationDate DESC LIMIT 1, 2");
                     $result->execute();
                     for ($i = 0; $row = $result->fetch(); $i++) {
                          $text = $row['PostDetails'];
@@ -2079,7 +2079,7 @@ if ($on_live == 0) {
                                    <div class="col-lg-8 col-sm-12 border-right-inner1">
                                         <?php
                                         $db->exec("set names utf8");
-                                        $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 12 AND Is_Active = 1 ORDER BY id DESC LIMIT 0, 1");
+                                        $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 12 AND Is_Active = 1 ORDER BY UpdationDate DESC LIMIT 0, 1");
                                         $result->execute();
                                         for ($i = 0; $row = $result->fetch(); $i++) {
                                              $text = $row['PostDetails'];
@@ -2111,7 +2111,7 @@ if ($on_live == 0) {
                                         <div class="DHighLightedList2">
                                              <?php
                                              $db->exec("set names utf8");
-                                             $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 12 AND Is_Active = 1 ORDER BY id DESC LIMIT 1, 4");
+                                             $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 12 AND Is_Active = 1 ORDER BY UpdationDate DESC LIMIT 1, 4");
                                              $result->execute();
                                              for ($i = 0; $row = $result->fetch(); $i++) {
                                                   $text = $row['PostDetails'];
@@ -2155,7 +2155,7 @@ if ($on_live == 0) {
                     <section class="DLPSTab2 mt-0">
                          <?php
                          $db->exec("set names utf8");
-                         $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 23 AND Is_Active = 1 ORDER BY id DESC LIMIT 0, 4");
+                         $result = $db->prepare("SELECT * FROM tblposts WHERE CategoryId = 23 AND Is_Active = 1 ORDER BY UpdationDate DESC LIMIT 0, 4");
                          $result->execute();
                          for ($i = 0; $row = $result->fetch(); $i++) {
                               $text = $row['PostDetails'];

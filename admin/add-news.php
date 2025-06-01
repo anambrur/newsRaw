@@ -1,18 +1,6 @@
 <?php
-// Session configuration MUST come before session_start()
-ini_set('session.cookie_httponly', 1);
-ini_set('session.cookie_secure', 1); // If using HTTPS
-ini_set('session.use_strict_mode', 1);
-session_set_cookie_params([
-    'lifetime' => 86400,
-    'path' => '/',
-    'domain' => $_SERVER['HTTP_HOST'],
-    'secure' => true, // if using HTTPS
-    'httponly' => true,
-    'samesite' => 'Strict'
-]);
-session_start();
 ob_start();
+session_start();
 include('includes/config.php');
 include('includes/resizeLib.php');
 
@@ -29,7 +17,7 @@ define('DRAFT_KEY', 'news_draft_' . basename(__FILE__));
 $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest';
 $isAutoSave = isset($_POST['draft']) && $isAjax;
 
-// CSRF Token Initialization
+// CSRF token generation
 if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
@@ -38,11 +26,7 @@ if (empty($_SESSION['csrf_token'])) {
 if (empty($_SESSION['login'])) {
     if ($isAutoSave) {
         header('Content-Type: application/json');
-        echo json_encode([
-            'success' => false,
-            'message' => 'Session expired',
-            'requires_login' => true
-        ]);
+        echo json_encode(['success' => false, 'message' => 'Session expired']);
         exit;
     }
     header('location:index.php');
@@ -54,12 +38,6 @@ $msg = $error = '';
 $posttitle = $catid = $postdetails = $reporter = $subtitle = $source = $photocap = '';
 $seoshort = $imageseo = $seomkey = $imgnewfile = '';
 $On_Slider = $On_Sportlingt = $On_Article = $On_Gfeed = $On_Save = 0;
-
-// Display success message from session if exists
-if (isset($_SESSION['success_msg'])) {
-    $msg = $_SESSION['success_msg'];
-    unset($_SESSION['success_msg']);
-}
 
 // Function to safely handle file uploads
 function handleFileUpload($fileInput, $uploadDir, $allowedExtensions)
@@ -143,149 +121,203 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
     $postId = isset($_POST['post_id']) ? intval($_POST['post_id']) : 0;
 
     // Validate CSRF token
-    if (!isset($_POST['csrf_token']) || !isset($_SESSION['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
-        $error = "Security error: Invalid CSRF token";
-
-        // Log the error for debugging
-        error_log('CSRF token validation failed. ' .
-            'Session token: ' . ($_SESSION['csrf_token'] ?? 'NULL') . ' | ' .
-            'Received token: ' . ($_POST['csrf_token'] ?? 'NULL'));
-
-        // Handle AJAX/auto-save requests differently
+    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+        $error = "Security error: Invalid CSRF token.";
         if ($isAutoSave) {
             ob_end_clean();
             header('Content-Type: application/json');
-            http_response_code(403); // Forbidden
-
-            echo json_encode([
-                'success' => false,
-                'message' => $error,
-                'new_csrf_token' => $_SESSION['csrf_token'] ?? bin2hex(random_bytes(32)),
-                'requires_login' => empty($_SESSION['login']) // Indicate if session expired
-            ]);
+            echo json_encode(['success' => false, 'message' => $error]);
             exit;
         }
-
-        // For regular form submissions
-        $_SESSION['error_msg'] = $error;
-        header("Location: " . $_SERVER['REQUEST_URI']);
-        exit;
-    }
-
-    // Only regenerate CSRF token for non-AJAX requests after successful validation
-    if (!$isAutoSave) {
-        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-    }
-
-    // Sanitize and validate inputs
-    $posttitle = trim($_POST['posttitle']);
-    $catid = intval($_POST['category']);
-    $postdetails = trim($_POST['postdescription']);
-    $subtitle = trim($_POST['subtitle']);
-    $source = trim($_POST['source']);
-    $photocap = trim($_POST['photocap']);
-    $seoshort = trim($_POST['seoshort']);
-    $imageseo = trim($_POST['imageseo']);
-    $seomkey = trim($_POST['seomkey']);
-
-    // Initialize reporter variables
-    $reporter = null;
-    $reporterName = null;
-
-    if (isset($_POST['useStaticReporter']) && $_POST['useStaticReporter'] === 'on') {
-        $reporterName = trim($_POST['static_reporter']);
-        if (empty($reporterName) && !isset($_POST['draft'])) {
-            $error = "Please enter a reporter name";
-        }
     } else {
-        $reporter = isset($_POST['reporter']) ? intval($_POST['reporter']) : null;
-        if (($reporter === null || $reporter === 0) && !isset($_POST['draft'])) {
-            $error = "Please select a valid reporter from the dropdown";
+        // Sanitize and validate inputs
+        $posttitle = trim($_POST['posttitle']);
+        $catid = intval($_POST['category']);
+        $postdetails = trim($_POST['postdescription']);
+        $subtitle = trim($_POST['subtitle']);
+        $source = trim($_POST['source']);
+        $photocap = trim($_POST['photocap']);
+        $seoshort = trim($_POST['seoshort']);
+        $imageseo = trim($_POST['imageseo']);
+        $seomkey = trim($_POST['seomkey']);
+
+        // Initialize reporter variables
+        $reporter = null;
+        $reporterName = null;
+
+        if (isset($_POST['useStaticReporter']) && $_POST['useStaticReporter'] === 'on') {
+            $reporterName = trim($_POST['static_reporter']);
+            if (empty($reporterName) && !isset($_POST['draft'])) {
+                $error = "Please enter a reporter name";
+            }
+        } else {
+            $reporter = isset($_POST['reporter']) ? intval($_POST['reporter']) : null;
+            if (($reporter === null || $reporter === 0) && !isset($_POST['draft'])) {
+                $error = "Please select a valid reporter from the dropdown";
+            }
         }
-    }
 
-    // Generate URL slug
-    $arr = explode(" ", $posttitle);
-    $url = implode("-", $arr);
+        // Generate URL slug
+        $arr = explode(" ", $posttitle);
+        $url = implode("-", $arr);
 
-    // Checkboxes
-    $On_Slider = isset($_POST['test']) && $_POST['test'] === 'value1' ? 1 : 0;
-    $On_Sportlingt = isset($_POST['sport']) && $_POST['sport'] === 'value1' ? 1 : 0;
-    $On_Article = isset($_POST['article']) && $_POST['article'] === 'value1' ? 1 : 0;
-    $On_Gfeed = isset($_POST['googlefeed']) && $_POST['googlefeed'] === 'value1' ? 1 : 0;
-    $On_Save = isset($_POST['saveme']) && $_POST['saveme'] === 'value1' ? 1 : 0;
+        // Checkboxes
+        $On_Slider = isset($_POST['test']) && $_POST['test'] === 'value1' ? 1 : 0;
+        $On_Sportlingt = isset($_POST['sport']) && $_POST['sport'] === 'value1' ? 1 : 0;
+        $On_Article = isset($_POST['article']) && $_POST['article'] === 'value1' ? 1 : 0;
+        $On_Gfeed = isset($_POST['googlefeed']) && $_POST['googlefeed'] === 'value1' ? 1 : 0;
+        $On_Save = isset($_POST['saveme']) && $_POST['saveme'] === 'value1' ? 1 : 0;
 
-    // Get scheduled publish time
-    $scheduledPublish = null;
-    if (!empty($_POST['scheduled_publish'])) {
-        $scheduledPublish = date('Y-m-d H:i:s', strtotime($_POST['scheduled_publish']));
-    }
-
-    // Set Is_Active based on submission type and scheduling
-    if (isset($_POST['draft'])) {
-        $status = 2; // Draft status
-    } elseif (!empty($scheduledPublish)) {
-        $status = (strtotime($scheduledPublish) <= time()) ? 1 : 3;
-    } else {
-        $status = 1; // Default to published
-    }
-
-    // For auto-save drafts, skip some validations
-    if (!isset($_POST['draft']) || $_POST['draft'] != '1') {
-        if (empty($posttitle) || empty($catid) || empty($postdetails)) {
-            $error = "Please fill all required fields.";
+        // Get scheduled publish time
+        $scheduledPublish = null;
+        if (!empty($_POST['scheduled_publish'])) {
+            $scheduledPublish = date('Y-m-d H:i:s', strtotime($_POST['scheduled_publish']));
         }
-    }
 
-    if (empty($error)) {
-        // Initialize variables
-        $imgnewfile = null;
-        $uploadSuccess = true;
-        $date = date('Y-m-d h:i:s');
+        // Set Is_Active based on submission type and scheduling
+        if (isset($_POST['draft'])) {
+            $status = 2; // Draft status
+        } elseif (!empty($scheduledPublish)) {
+            $status = (strtotime($scheduledPublish) <= time()) ? 1 : 3;
+        } else {
+            $status = 1; // Default to published
+        }
 
-        // Handle file upload only if:
-        // 1. This is NOT a draft save OR
-        // 2. This is a draft but a file was actually uploaded
-        if (!isset($_POST['draft']) || $_POST['draft'] != '1' || (isset($_FILES['postimage']) && $_FILES['postimage']['error'] === UPLOAD_ERR_OK)) {
-            $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-            list($uploadSuccess, $uploadResult) = handleFileUpload('postimage', 'images/postimages/', $allowedExtensions);
-
-            if (!$uploadSuccess) {
-                $error = $uploadResult;
-            } else {
-                $imgnewfile = $uploadResult;
+        // For auto-save drafts, skip some validations
+        if (!isset($_POST['draft']) || $_POST['draft'] != '1') {
+            if (empty($posttitle) || empty($catid) || empty($postdetails)) {
+                $error = "Please fill all required fields.";
             }
         }
 
         if (empty($error)) {
-            // For drafts, don't check for duplicate titles
-            if (!isset($_POST['draft']) || $_POST['draft'] != '1') {
-                $checkQuery = mysqli_prepare($con, "SELECT id FROM tblposts WHERE PostTitle = ? AND id != ?");
-                mysqli_stmt_bind_param($checkQuery, 'si', $posttitle, $postId);
-                mysqli_stmt_execute($checkQuery);
-                mysqli_stmt_store_result($checkQuery);
+            // Initialize variables
+            $imgnewfile = null;
+            $uploadSuccess = true;
+            $date = date('Y-m-d h:i:s');
 
-                if (mysqli_stmt_num_rows($checkQuery) > 0) {
-                    $error = "Post title already exists. Please choose a different one.";
+            // Handle file upload only if:
+            // 1. This is NOT a draft save OR
+            // 2. This is a draft but a file was actually uploaded
+            if (!isset($_POST['draft']) || $_POST['draft'] != '1' || (isset($_FILES['postimage']) && $_FILES['postimage']['error'] === UPLOAD_ERR_OK)) {
+                $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+                list($uploadSuccess, $uploadResult) = handleFileUpload('postimage', 'images/postimages/', $allowedExtensions);
+
+                if (!$uploadSuccess) {
+                    $error = $uploadResult;
+                } else {
+                    $imgnewfile = $uploadResult;
                 }
             }
 
             if (empty($error)) {
-                $isAutosave = (isset($_POST['draft']) && $_POST['draft'] == '1') ? 1 : 0;
+                // For drafts, don't check for duplicate titles
+                if (!isset($_POST['draft']) || $_POST['draft'] != '1') {
+                    $checkQuery = mysqli_prepare($con, "SELECT id FROM tblposts WHERE PostTitle = ? AND id != ?");
+                    mysqli_stmt_bind_param($checkQuery, 'si', $posttitle, $postId);
+                    mysqli_stmt_execute($checkQuery);
+                    mysqli_stmt_store_result($checkQuery);
 
-                // Check if we're publishing an existing draft
-                if ($postId > 0 && isset($_POST['submit']) && !isset($_POST['draft'])) {
-                    // Convert draft to published post
-                    $status = 1; // Published status
+                    if (mysqli_stmt_num_rows($checkQuery) > 0) {
+                        $error = "Post title already exists. Please choose a different one.";
+                    }
+                }
 
-                    $updateQuery = mysqli_prepare(
-                        $con,
-                        "UPDATE tblposts SET 
+                if (empty($error)) {
+                    $isAutosave = (isset($_POST['draft']) && $_POST['draft'] == '1') ? 1 : 0;
+
+                    // Check if we're publishing an existing draft
+                    if ($postId > 0 && isset($_POST['submit']) && !isset($_POST['draft'])) {
+                        // Convert draft to published post
+                        $status = 1; // Published status
+
+                        $updateQuery = mysqli_prepare(
+                            $con,
+                            "UPDATE tblposts SET 
+                                PostTitle = ?, 
+                                CategoryId = ?, 
+                                PostDetails = ?, 
+                                PostUrl = ?, 
+                                Is_Active = ?, 
+                                On_Slider = ?, 
+                                On_Sportlingt = ?, 
+                                On_Article = ?, 
+                                On_Gfeed = ?, 
+                                On_Save = ?,
+                                PostImage = ?,
+                                repoter = ?, 
+                                reporterName = ?, 
+                                source = ?, 
+                                subtitle = ?, 
+                                photocap = ?, 
+                                seoshort = ?, 
+                                imageseo = ?, 
+                                seomkey = ?, 
+                                UpdationDate = ?, 
+                                ScheduledPublish = ?,
+                                IsAutosave = 0
+                            WHERE id = ?"
+                        );
+
+                        // Prepare parameters
+                        $params = [
+                            $posttitle,        // s string
+                            $catid,            // i
+                            $postdetails,      // s
+                            $url,              // s
+                            $status,           // i
+                            $On_Slider,        // i
+                            $On_Sportlingt,    // i
+                            $On_Article,       // i
+                            $On_Gfeed,         // i
+                            $On_Save,           // i
+                            $imgnewfile,  // s
+                            $reporter,         // i
+                            $reporterName,     // s
+                            $source,           // s
+                            $subtitle,         // s
+                            $photocap,         // s
+                            $seoshort,         // s
+                            $imageseo,         // s
+                            $seomkey,          // s
+                            $date,             // s
+                            $scheduledPublish, // s
+                            $postId            // i
+                        ];
+
+                    
+                        // Create type string
+                        $types = 'sissiiiiiisisssssssssi'; 
+
+                        mysqli_stmt_bind_param($updateQuery, $types, ...$params);
+
+                        if (mysqli_stmt_execute($updateQuery)) {
+                            $msg = "Draft successfully published";
+                            // Clear local draft after successful publish
+                            echo '<script>localStorage.removeItem("' . DRAFT_KEY . '");</script>';
+
+                            // Create thumbnail if new image was uploaded
+                            if ($imgnewfile) {
+                                try {
+                                    $resizeObj = new resize("images/postimages/" . $imgnewfile);
+                                    $resizeObj->resizeImage(300, 200, 'exact');
+                                    $resizeObj->saveImage("images/thumb/" . $imgnewfile, 100);
+                                } catch (Exception $e) {
+                                    error_log("Thumbnail creation failed: " . $e->getMessage());
+                                }
+                            }
+                        } else {
+                            $error = "Database error: " . mysqli_error($con);
+                        }
+                    }
+                    // Check if we're updating an existing draft
+                    elseif ($postId > 0 && $status == 2) {
+                        // Update existing draft
+                        $query = "UPDATE tblposts SET 
                             PostTitle = ?, 
                             CategoryId = ?, 
                             PostDetails = ?, 
                             PostUrl = ?, 
-                            Is_Active = ?, 
                             On_Slider = ?, 
                             On_Sportlingt = ?, 
                             On_Article = ?, 
@@ -302,224 +334,120 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                             seomkey = ?, 
                             UpdationDate = ?, 
                             ScheduledPublish = ?,
-                            IsAutosave = 0
-                        WHERE id = ?"
-                    );
+                            IsAutosave = ?
+                        WHERE id = ?";
 
-                    // Prepare parameters
-                    $params = [
-                        $posttitle,        // s string
-                        $catid,            // i
-                        $postdetails,      // s
-                        $url,              // s
-                        $status,           // i
-                        $On_Slider,        // i
-                        $On_Sportlingt,    // i
-                        $On_Article,       // i
-                        $On_Gfeed,         // i
-                        $On_Save,           // i
-                        $imgnewfile,  // s
-                        $reporter,         // i
-                        $reporterName,     // s
-                        $source,           // s
-                        $subtitle,         // s
-                        $photocap,         // s
-                        $seoshort,         // s
-                        $imageseo,         // s
-                        $seomkey,          // s
-                        $date,             // s
-                        $scheduledPublish, // s
-                        $postId            // i
-                    ];
+                        $updateQuery = mysqli_prepare($con, $query);
 
-                    // Create type string
-                    $types = 'sissiiiiiisisssssssssi';
+                        // Prepare base parameters (always included)
+                        $params = [
+                            $posttitle,        // s (string)
+                            $catid,            // i (integer)
+                            $postdetails,      // s
+                            $url,              // s
+                            $On_Slider,        // i
+                            $On_Sportlingt,    // i
+                            $On_Article,       // i
+                            $On_Gfeed,         // i
+                            $On_Save,          // i
+                            $imgnewfile,        // s
+                            $reporter,         // i
+                            $reporterName,     // s
+                            $source,           // s
+                            $subtitle,         // s
+                            $photocap,         // s
+                            $seoshort,         // s
+                            $imageseo,         // s
+                            $seomkey,          // s
+                            $date,             // s
+                            $scheduledPublish, // s
+                            $isAutosave,       // i
+                            $postId            // i
+                        ];
 
-                    mysqli_stmt_bind_param($updateQuery, $types, ...$params);
+                        // Build type string
+                        $types = 'sissiiiiisisssssssssii';
 
-                    if (mysqli_stmt_execute($updateQuery)) {
-                        $_SESSION['success_msg'] = "Draft successfully published";
-                        // Clear local draft after successful publish
-                        echo '<script>localStorage.removeItem("' . DRAFT_KEY . '");</script>';
+                        
 
-                        // Create thumbnail if new image was uploaded
-                        if ($imgnewfile) {
-                            try {
-                                $resizeObj = new resize("images/postimages/" . $imgnewfile);
-                                $resizeObj->resizeImage(300, 200, 'exact');
-                                $resizeObj->saveImage("images/thumb/" . $imgnewfile, 100);
-                            } catch (Exception $e) {
-                                error_log("Thumbnail creation failed: " . $e->getMessage());
+                        
+
+                        // Bind parameters
+                        mysqli_stmt_bind_param($updateQuery, $types, ...$params);
+
+                        if (mysqli_stmt_execute($updateQuery)) {
+                            $msg = "Draft updated successfully";
+                            // Create thumbnail if new image was uploaded
+                            if ($imgnewfile) {
+                                try {
+                                    $resizeObj = new resize("images/postimages/" . $imgnewfile);
+                                    $resizeObj->resizeImage(300, 200, 'exact');
+                                    $resizeObj->saveImage("images/thumb/" . $imgnewfile, 100);
+                                } catch (Exception $e) {
+                                    error_log("Thumbnail creation failed: " . $e->getMessage());
+                                }
                             }
-                        }
-
-                        // Redirect to prevent form resubmission
-                        header("Location: add-news.php");
-                        exit();
-                    } else {
-                        $error = "Database error: " . mysqli_error($con);
-                    }
-                }
-                // Check if we're updating an existing draft
-                elseif ($postId > 0 && $status == 2) {
-                    // Update existing draft
-                    $query = "UPDATE tblposts SET 
-                        PostTitle = ?, 
-                        CategoryId = ?, 
-                        PostDetails = ?, 
-                        PostUrl = ?, 
-                        On_Slider = ?, 
-                        On_Sportlingt = ?, 
-                        On_Article = ?, 
-                        On_Gfeed = ?, 
-                        On_Save = ?,
-                        PostImage = ?,
-                        repoter = ?, 
-                        reporterName = ?, 
-                        source = ?, 
-                        subtitle = ?, 
-                        photocap = ?, 
-                        seoshort = ?, 
-                        imageseo = ?, 
-                        seomkey = ?, 
-                        UpdationDate = ?, 
-                        ScheduledPublish = ?,
-                        IsAutosave = ?
-                    WHERE id = ?";
-
-                    $updateQuery = mysqli_prepare($con, $query);
-
-                    // Prepare base parameters (always included)
-                    $params = [
-                        $posttitle,        // s (string)
-                        $catid,            // i (integer)
-                        $postdetails,      // s
-                        $url,              // s
-                        $On_Slider,        // i
-                        $On_Sportlingt,    // i
-                        $On_Article,       // i
-                        $On_Gfeed,         // i
-                        $On_Save,          // i
-                        $imgnewfile,        // s
-                        $reporter,         // i
-                        $reporterName,     // s
-                        $source,           // s
-                        $subtitle,         // s
-                        $photocap,         // s
-                        $seoshort,         // s
-                        $imageseo,         // s
-                        $seomkey,          // s
-                        $date,             // s
-                        $scheduledPublish, // s
-                        $isAutosave,       // i
-                        $postId            // i
-                    ];
-
-                    // Build type string
-                    $types = 'sissiiiiisisssssssssii';
-
-                    // Bind parameters
-                    mysqli_stmt_bind_param($updateQuery, $types, ...$params);
-
-                    if (mysqli_stmt_execute($updateQuery)) {
-                        if ($isAutoSave) {
-                            ob_end_clean();
-                            header('Content-Type: application/json');
-                            echo json_encode([
-                                'success' => true,
-                                'message' => 'Draft updated successfully',
-                                'post_id' => $postId,
-                                'new_csrf_token' => $_SESSION['csrf_token']
-                            ]);
-                            exit;
                         } else {
-                            $_SESSION['success_msg'] = "Draft updated successfully";
-                            header("Location: add-news.php");
-                            exit();
-                        }
-
-                        // Create thumbnail if new image was uploaded
-                        if ($imgnewfile) {
-                            try {
-                                $resizeObj = new resize("images/postimages/" . $imgnewfile);
-                                $resizeObj->resizeImage(300, 200, 'exact');
-                                $resizeObj->saveImage("images/thumb/" . $imgnewfile, 100);
-                            } catch (Exception $e) {
-                                error_log("Thumbnail creation failed: " . $e->getMessage());
-                            }
+                            $error = "Database error: " . mysqli_error($con);
                         }
                     } else {
-                        $error = "Database error: " . mysqli_error($con);
-                    }
-                } else {
-                    // Insert new post/draft
-                    $insertQuery = mysqli_prepare(
-                        $con,
-                        "INSERT INTO tblposts 
-                        (PostTitle, CategoryId, PostDetails, PostUrl, Is_Active, On_Slider, 
-                         On_Sportlingt, On_Article, On_Gfeed, On_Save, PostImage, repoter, reporterName, source, subtitle, photocap, seoshort, imageseo, seomkey, PostingDate, UpdationDate, ScheduledPublish, IsAutosave) 
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-                    );
+                        // Insert new post/draft
+                        $insertQuery = mysqli_prepare(
+                            $con,
+                            "INSERT INTO tblposts 
+                            (PostTitle, CategoryId, PostDetails, PostUrl, Is_Active, On_Slider, 
+                             On_Sportlingt, On_Article, On_Gfeed, On_Save, PostImage, repoter, reporterName, source, subtitle, photocap, seoshort, imageseo, seomkey, PostingDate, UpdationDate, ScheduledPublish, IsAutosave) 
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                        );
 
-                    mysqli_stmt_bind_param(
-                        $insertQuery,
-                        'sisssiiiiisissssssssssi',
-                        $posttitle,
-                        $catid,
-                        $postdetails,
-                        $url,
-                        $status,
-                        $On_Slider,
-                        $On_Sportlingt,
-                        $On_Article,
-                        $On_Gfeed,
-                        $On_Save,
-                        $imgnewfile,
-                        $reporter,
-                        $reporterName,
-                        $source,
-                        $subtitle,
-                        $photocap,
-                        $seoshort,
-                        $imageseo,
-                        $seomkey,
-                        $date,
-                        $date,
-                        $scheduledPublish,
-                        $isAutosave
-                    );
+                        mysqli_stmt_bind_param(
+                            $insertQuery,
+                            'sisssiiiiisissssssssssi',
+                            $posttitle,
+                            $catid,
+                            $postdetails,
+                            $url,
+                            $status,
+                            $On_Slider,
+                            $On_Sportlingt,
+                            $On_Article,
+                            $On_Gfeed,
+                            $On_Save,
+                            $imgnewfile,
+                            $reporter,
+                            $reporterName,
+                            $source,
+                            $subtitle,
+                            $photocap,
+                            $seoshort,
+                            $imageseo,
+                            $seomkey,
+                            $date,
+                            $date,
+                            $scheduledPublish,
+                            $isAutosave
+                        );
 
-                    if (mysqli_stmt_execute($insertQuery)) {
-                        $postId = mysqli_insert_id($con);
+                        if (mysqli_stmt_execute($insertQuery)) {
+                            $postId = mysqli_insert_id($con);
+                            $msg = "Post successfully " . ($status == 1 ? "published" : ($status == 2 ? "saved as draft" : "scheduled"));
+                            if ($isAutosave) {
+                                $msg .= " (Auto-saved)";
+                            }
 
-                        if ($isAutoSave) {
-                            ob_end_clean();
-                            header('Content-Type: application/json');
-                            echo json_encode([
-                                'success' => true,
-                                'message' => 'Draft saved successfully',
-                                'post_id' => $postId,
-                                'new_csrf_token' => $_SESSION['csrf_token']
-                            ]);
-                            exit;
+                            // Create thumbnail if image was uploaded
+                            if ($imgnewfile) {
+                                try {
+                                    $resizeObj = new resize("images/postimages/" . $imgnewfile);
+                                    $resizeObj->resizeImage(300, 200, 'exact');
+                                    $resizeObj->saveImage("images/thumb/" . $imgnewfile, 100);
+                                } catch (Exception $e) {
+                                    error_log("Thumbnail creation failed: " . $e->getMessage());
+                                }
+                            }
                         } else {
-                            $_SESSION['success_msg'] = "Post successfully " . ($status == 1 ? "published" : ($status == 2 ? "saved as draft" : "scheduled"));
-                            header("Location: add-news.php");
-                            exit();
+                            $error = "Database error: " . mysqli_error($con);
                         }
-
-                        // Create thumbnail if image was uploaded
-                        if ($imgnewfile) {
-                            try {
-                                $resizeObj = new resize("images/postimages/" . $imgnewfile);
-                                $resizeObj->resizeImage(300, 200, 'exact');
-                                $resizeObj->saveImage("images/thumb/" . $imgnewfile, 100);
-                            } catch (Exception $e) {
-                                error_log("Thumbnail creation failed: " . $e->getMessage());
-                            }
-                        }
-                    } else {
-                        $error = "Database error: " . mysqli_error($con);
                     }
                 }
             }
@@ -531,17 +459,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
         ob_end_clean();
         header('Content-Type: application/json');
         if ($error) {
-            echo json_encode([
-                'success' => false,
-                'message' => $error,
-                'new_csrf_token' => $_SESSION['csrf_token']
-            ]);
+            echo json_encode(['success' => false, 'message' => $error]);
         } else {
             echo json_encode([
                 'success' => true,
                 'message' => $msg,
-                'post_id' => $postId,
-                'new_csrf_token' => $_SESSION['csrf_token']
+                'post_id' => $postId
             ]);
         }
         exit;
@@ -946,12 +869,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                 }
             });
 
-            // Check for stored CSRF token
-            const storedToken = localStorage.getItem('csrf_token');
-            if (storedToken) {
-                $('input[name="csrf_token"]').val(storedToken);
-            }
-
             // Auto-save system implementation
             const DRAFT_KEY = '<?php echo DRAFT_KEY; ?>';
             let autoSaveInterval;
@@ -1067,18 +984,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                 updateDraftUI(false);
             }
 
-            function updateCsrfToken(token) {
-                $('input[name="csrf_token"]').val(token);
-                localStorage.setItem('csrf_token', token);
-                // Update in any local draft data
-                const draft = localStorage.getItem(DRAFT_KEY);
-                if (draft) {
-                    const data = JSON.parse(draft);
-                    data.csrf_token = token;
-                    localStorage.setItem(DRAFT_KEY, JSON.stringify(data));
-                }
-            }
-
             // Auto-save function
             function autoSaveDraft() {
                 if (isAutoSaving) {
@@ -1131,93 +1036,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                     success: function(response, status, xhr) {
                         console.log('Server response:', response);
 
-
-
-                        // Handle JSON response (some servers return string that needs parsing)
-                        let jsonResponse = typeof response === 'string' ? JSON.parse(response) : response;
-
-                        if (jsonResponse.new_csrf_token) {
-                            updateCsrfToken(jsonResponse.new_csrf_token);
-                        }
-                        if (typeof response === 'string') {
-                            try {
-                                jsonResponse = JSON.parse(response);
-                            } catch (e) {
-                                console.error('Failed to parse JSON response:', e);
-                                showAutoSaveNotification('Draft save failed (invalid response)', true);
-                                return;
-                            }
-                        }
-
-                        if (jsonResponse && jsonResponse.success) {
-                            // Always update CSRF token if provided (even for existing drafts)
-                            if (jsonResponse.new_csrf_token) {
-                                $('input[name="csrf_token"]').val(jsonResponse.new_csrf_token);
-                                localStorage.setItem('csrf_token', jsonResponse.new_csrf_token);
-
-                                // Update token in local draft data
-                                const draft = localStorage.getItem(DRAFT_KEY);
-                                if (draft) {
-                                    const data = JSON.parse(draft);
-                                    data.csrf_token = jsonResponse.new_csrf_token;
-                                    localStorage.setItem(DRAFT_KEY, JSON.stringify(data));
-                                }
-                            }
-
+                        if (response && response.success) {
                             // Update the post_id if this is a new draft
-                            if (jsonResponse.post_id && !$('#post_id').val()) {
-                                $('#post_id').val(jsonResponse.post_id);
+                            if (response.post_id && !$('#post_id').val()) {
+                                $('#post_id').val(response.post_id);
                                 // Update local storage with the post_id
                                 const draft = localStorage.getItem(DRAFT_KEY);
                                 if (draft) {
                                     const data = JSON.parse(draft);
-                                    data.post_id = jsonResponse.post_id;
+                                    data.post_id = response.post_id;
                                     localStorage.setItem(DRAFT_KEY, JSON.stringify(data));
                                 }
                                 updateDraftUI(true);
                             }
 
-                            // Update last saved data with current form state
-                            lastSavedData = JSON.stringify(collectFormData());
-
-                            // Show success notification
-                            showAutoSaveNotification(jsonResponse.message || 'Draft saved');
-
-                            // Update save status
-                            updateSaveStatus(false);
+                            lastSavedData = JSON.stringify(data);
+                            showAutoSaveNotification(response.message || 'Draft saved');
                         } else {
-                            // Handle error response
-                            const errorMsg = jsonResponse?.message || 'Draft save failed';
-                            showAutoSaveNotification(errorMsg, true);
-
-                            if (jsonResponse?.new_csrf_token) {
-                                // Even on failure, update CSRF token if provided
-                                $('input[name="csrf_token"]').val(jsonResponse.new_csrf_token);
-                                localStorage.setItem('csrf_token', jsonResponse.new_csrf_token);
-                            }
+                            showAutoSaveNotification(response?.message || 'Draft save failed', true);
                         }
                     },
                     error: function(xhr, status, error) {
-                        try {
-                            const response = JSON.parse(xhr.responseText);
-                            if (response.requires_login) {
-                                window.location.href = 'index.php'; // Redirect to login
-                                return;
-                            }
-                            if (response.new_csrf_token) {
-                                updateCsrfToken(response.new_csrf_token);
-                            }
-                            showAutoSaveNotification(response.message || 'Security error occurred', true);
-                        } catch (e) {
-                            showAutoSaveNotification('Connection error - draft saved locally', true);
-                        }
-                        updateSaveStatus(false, true);
+                        console.error('AJAX error:', {
+                            status: xhr.status,
+                            error: error,
+                            responseText: xhr.responseText
+                        });
+                        showAutoSaveNotification('Saved locally (server unavailable)', true);
                     },
-
-
                     complete: function() {
                         console.log('Auto-save completed');
                         isAutoSaving = false;
+                        updateSaveStatus(false);
                     }
                 });
             }
@@ -1267,14 +1117,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
 
             // Form submission handler
             $('form[name="addpost"]').submit(function(e) {
-                // Only prevent default for AJAX submissions (auto-saves)
-                if ($(this).find('[name="draft"]').length && $(this).find('[name="draft"]').val() === '1') {
-                    // This is an auto-save, let the AJAX handler deal with it
-                    return true;
+                // Get the current draft ID
+                const draft = localStorage.getItem(DRAFT_KEY);
+                if (draft) {
+                    const data = JSON.parse(draft);
+                    if (data.post_id) {
+                        // Add the post_id to the form before submission
+                        $('<input>').attr({
+                            type: 'hidden',
+                            name: 'post_id',
+                            value: data.post_id
+                        }).appendTo(this);
+                    }
                 }
 
-                // For regular submissions, let the form submit normally
-                // The PHP redirect will handle the page refresh
+                // Validate reporter selection
+                if ($('#useStaticReporter').is(':checked')) {
+                    $('#reporter').val('');
+                    if ($('#staticReporter').val().trim() === '') {
+                        alert('Please enter a reporter name');
+                        e.preventDefault();
+                        return false;
+                    }
+                } else {
+                    if ($('#reporter').val() === '' || $('#reporter').val() === '0') {
+                        alert('Please select a reporter from the dropdown');
+                        e.preventDefault();
+                        return false;
+                    }
+                }
+
+                // Clear draft if this is a publish action
+                if (!$(this).find('[name="draft"]').length) {
+                    clearLocalDraft();
+                }
+
                 return true;
             });
 
