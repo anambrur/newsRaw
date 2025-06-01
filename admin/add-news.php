@@ -30,17 +30,17 @@ define('DRAFT_KEY', 'news_draft_' . basename(__FILE__));
 $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest';
 $isAutoSave = isset($_POST['draft']) && $isAjax;
 
-// CSRF token generation - Only create if doesn't exist
+// Modify your CSRF token handling code (near the top of your PHP)
 if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 
-// For AJAX requests, don't regenerate the token
-if (!$isAjax) {
-    // Regenerate token only after form submission
-    if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($_POST['draft']))) {
-        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-    }
+// For AJAX requests, don't regenerate the token but do return the current one
+if ($isAutoSave) {
+    // Just ensure token exists, don't regenerate
+} elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Regenerate token only after successful form submission
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 
 // Check authentication
@@ -1113,20 +1113,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
 
                         if (response && response.success) {
                             // Update the post_id if this is a new draft
-                            if (response.post_id && !$('#post_id').val()) {
-                                if (response.new_csrf_token) {
-                                    $('input[name="csrf_token"]').val(response.new_csrf_token);
-                                    localStorage.setItem('csrf_token', response.new_csrf_token);
-                                }
-                                $('#post_id').val(response.post_id);
-                                // Update local storage with the post_id
+                            // if (response.post_id && !$('#post_id').val()) {
+                            //     if (response.new_csrf_token) {
+                            //         $('input[name="csrf_token"]').val(response.new_csrf_token);
+                            //         localStorage.setItem('csrf_token', response.new_csrf_token);
+                            //     }
+                            //     $('#post_id').val(response.post_id);
+                            //     // Update local storage with the post_id
+                            //     const draft = localStorage.getItem(DRAFT_KEY);
+                            //     if (draft) {
+                            //         const data = JSON.parse(draft);
+                            //         data.post_id = response.post_id;
+                            //         localStorage.setItem(DRAFT_KEY, JSON.stringify(data));
+                            //     }
+                            //     updateDraftUI(true);
+                            // }
+
+                            if (response.new_csrf_token) {
+                                $('input[name="csrf_token"]').val(response.new_csrf_token);
+                                localStorage.setItem('csrf_token', response.new_csrf_token);
+                                // Update the token in our local draft data
                                 const draft = localStorage.getItem(DRAFT_KEY);
                                 if (draft) {
                                     const data = JSON.parse(draft);
-                                    data.post_id = response.post_id;
+                                    data.csrf_token = response.new_csrf_token;
                                     localStorage.setItem(DRAFT_KEY, JSON.stringify(data));
                                 }
-                                updateDraftUI(true);
                             }
 
                             lastSavedData = JSON.stringify(data);
