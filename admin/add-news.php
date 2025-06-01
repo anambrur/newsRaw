@@ -153,7 +153,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
         if ($isAutoSave) {
             ob_end_clean();
             header('Content-Type: application/json');
-            echo json_encode(['success' => false, 'message' => $error]);
+            if ($error) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => $error,
+                    'new_csrf_token' => $_SESSION['csrf_token']
+                ]);
+            } else {
+                echo json_encode([
+                    'success' => true,
+                    'message' => $msg,
+                    'post_id' => $postId,
+                    'new_csrf_token' => $_SESSION['csrf_token']
+                ]);
+            }
             exit;
         }
     } else {
