@@ -5,10 +5,23 @@ include('includes/config.php');
 include('includes/resizeLib.php');
 
 // Error reporting configuration
+
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/php_errors.log');
+// Ensure sessions work properly
+ini_set('session.cookie_httponly', 1);
+ini_set('session.cookie_secure', 1); // If using HTTPS
+ini_set('session.use_strict_mode', 1);
+session_set_cookie_params([
+    'lifetime' => 86400,
+    'path' => '/',
+    'domain' => $_SERVER['HTTP_HOST'],
+    'secure' => true, // if using HTTPS
+    'httponly' => true,
+    'samesite' => 'Strict'
+]);
 
 // Constants
 define('DRAFT_KEY', 'news_draft_' . basename(__FILE__));
@@ -17,9 +30,17 @@ define('DRAFT_KEY', 'news_draft_' . basename(__FILE__));
 $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest';
 $isAutoSave = isset($_POST['draft']) && $isAjax;
 
-// CSRF token generation
+// CSRF token generation - Only create if doesn't exist
 if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
+// For AJAX requests, don't regenerate the token
+if (!$isAjax) {
+    // Regenerate token only after form submission
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($_POST['draft']))) {
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    }
 }
 
 // Check authentication
@@ -489,12 +510,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
         ob_end_clean();
         header('Content-Type: application/json');
         if ($error) {
-            echo json_encode(['success' => false, 'message' => $error]);
+            echo json_encode([
+                'success' => false,
+                'message' => $error,
+                'new_csrf_token' => $_SESSION['csrf_token']
+            ]);
         } else {
             echo json_encode([
                 'success' => true,
                 'message' => $msg,
-                'post_id' => $postId
+                'post_id' => $postId,
+                'new_csrf_token' => $_SESSION['csrf_token']
             ]);
         }
         exit;
@@ -899,6 +925,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                 }
             });
 
+            // Check for stored CSRF token
+            const storedToken = localStorage.getItem('csrf_token');
+            if (storedToken) {
+                $('input[name="csrf_token"]').val(storedToken);
+            }
+
             // Auto-save system implementation
             const DRAFT_KEY = '<?php echo DRAFT_KEY; ?>';
             let autoSaveInterval;
@@ -1069,6 +1101,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                         if (response && response.success) {
                             // Update the post_id if this is a new draft
                             if (response.post_id && !$('#post_id').val()) {
+                                if (response.new_csrf_token) {
+                                    $('input[name="csrf_token"]').val(response.new_csrf_token);
+                                    localStorage.setItem('csrf_token', response.new_csrf_token);
+                                }
                                 $('#post_id').val(response.post_id);
                                 // Update local storage with the post_id
                                 const draft = localStorage.getItem(DRAFT_KEY);
