@@ -1,10 +1,23 @@
 <?php
-ob_start();
+// Session configuration MUST come before session_start()
+ini_set('session.cookie_httponly', 1);
+ini_set('session.cookie_secure', 1); // If using HTTPS
+ini_set('session.use_strict_mode', 1);
+session_set_cookie_params([
+    'lifetime' => 86400,
+    'path' => '/',
+    'domain' => $_SERVER['HTTP_HOST'],
+    'secure' => true, // if using HTTPS
+    'httponly' => true,
+    'samesite' => 'Strict'
+]);
 session_start();
+ob_start();
 include('includes/config.php');
 include('includes/resizeLib.php');
 
 // Error reporting configuration
+
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 ini_set('log_errors', 1);
@@ -17,8 +30,16 @@ define('DRAFT_KEY', 'news_draft_' . basename(__FILE__));
 $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest';
 $isAutoSave = isset($_POST['draft']) && $isAjax;
 
-// CSRF token generation
+// Modify your CSRF token handling code (near the top of your PHP)
 if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
+// For AJAX requests, don't regenerate the token but do return the current one
+if ($isAutoSave) {
+    // Just ensure token exists, don't regenerate
+} elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Regenerate token only after successful form submission
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 
@@ -38,6 +59,12 @@ $msg = $error = '';
 $posttitle = $catid = $postdetails = $reporter = $subtitle = $source = $photocap = '';
 $seoshort = $imageseo = $seomkey = $imgnewfile = '';
 $On_Slider = $On_Sportlingt = $On_Article = $On_Gfeed = $On_Save = 0;
+
+// Display success message from session if exists
+if (isset($_SESSION['success_msg'])) {
+    $msg = $_SESSION['success_msg'];
+    unset($_SESSION['success_msg']);
+}
 
 // Function to safely handle file uploads
 function handleFileUpload($fileInput, $uploadDir, $allowedExtensions)
@@ -126,7 +153,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
         if ($isAutoSave) {
             ob_end_clean();
             header('Content-Type: application/json');
-            echo json_encode(['success' => false, 'message' => $error]);
+            if ($error) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => $error,
+                    'new_csrf_token' => $_SESSION['csrf_token']
+                ]);
+            } else {
+                echo json_encode([
+                    'success' => true,
+                    'message' => $msg,
+                    'post_id' => $postId,
+                    'new_csrf_token' => $_SESSION['csrf_token']
+                ]);
+            }
             exit;
         }
     } else {
@@ -285,14 +325,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                             $postId            // i
                         ];
 
-                    
                         // Create type string
-                        $types = 'sissiiiiiisisssssssssi'; 
+                        $types = 'sissiiiiiisisssssssssi';
 
                         mysqli_stmt_bind_param($updateQuery, $types, ...$params);
 
                         if (mysqli_stmt_execute($updateQuery)) {
-                            $msg = "Draft successfully published";
+                            $_SESSION['success_msg'] = "Draft successfully published";
                             // Clear local draft after successful publish
                             echo '<script>localStorage.removeItem("' . DRAFT_KEY . '");</script>';
 
@@ -306,6 +345,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                                     error_log("Thumbnail creation failed: " . $e->getMessage());
                                 }
                             }
+
+                            // Redirect to prevent form resubmission
+                            header("Location: add-news.php");
+                            exit();
                         } else {
                             $error = "Database error: " . mysqli_error($con);
                         }
@@ -368,15 +411,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                         // Build type string
                         $types = 'sissiiiiisisssssssssii';
 
-                        
-
-                        
-
                         // Bind parameters
                         mysqli_stmt_bind_param($updateQuery, $types, ...$params);
 
                         if (mysqli_stmt_execute($updateQuery)) {
-                            $msg = "Draft updated successfully";
+                            if ($isAutoSave) {
+                                ob_end_clean();
+                                header('Content-Type: application/json');
+                                echo json_encode([
+                                    'success' => true,
+                                    'message' => 'Draft updated successfully',
+                                    'post_id' => $postId
+                                ]);
+                                exit;
+                            } else {
+                                $_SESSION['success_msg'] = "Draft updated successfully";
+                                header("Location: add-news.php");
+                                exit();
+                            }
+
                             // Create thumbnail if new image was uploaded
                             if ($imgnewfile) {
                                 try {
@@ -430,9 +483,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
 
                         if (mysqli_stmt_execute($insertQuery)) {
                             $postId = mysqli_insert_id($con);
-                            $msg = "Post successfully " . ($status == 1 ? "published" : ($status == 2 ? "saved as draft" : "scheduled"));
-                            if ($isAutosave) {
-                                $msg .= " (Auto-saved)";
+
+                            if ($isAutoSave) {
+                                ob_end_clean();
+                                header('Content-Type: application/json');
+                                echo json_encode([
+                                    'success' => true,
+                                    'message' => 'Draft saved successfully',
+                                    'post_id' => $postId
+                                ]);
+                                exit;
+                            } else {
+                                $_SESSION['success_msg'] = "Post successfully " . ($status == 1 ? "published" : ($status == 2 ? "saved as draft" : "scheduled"));
+                                header("Location: add-news.php");
+                                exit();
                             }
 
                             // Create thumbnail if image was uploaded
@@ -459,12 +523,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
         ob_end_clean();
         header('Content-Type: application/json');
         if ($error) {
-            echo json_encode(['success' => false, 'message' => $error]);
+            echo json_encode([
+                'success' => false,
+                'message' => $error,
+                'new_csrf_token' => $_SESSION['csrf_token']
+            ]);
         } else {
             echo json_encode([
                 'success' => true,
                 'message' => $msg,
-                'post_id' => $postId
+                'post_id' => $postId,
+                'new_csrf_token' => $_SESSION['csrf_token']
             ]);
         }
         exit;
@@ -869,6 +938,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                 }
             });
 
+            // Check for stored CSRF token
+            const storedToken = localStorage.getItem('csrf_token');
+            if (storedToken) {
+                $('input[name="csrf_token"]').val(storedToken);
+            }
+
             // Auto-save system implementation
             const DRAFT_KEY = '<?php echo DRAFT_KEY; ?>';
             let autoSaveInterval;
@@ -1036,24 +1111,64 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                     success: function(response, status, xhr) {
                         console.log('Server response:', response);
 
-                        if (response && response.success) {
+                        // Handle JSON response (some servers return string that needs parsing)
+                        let jsonResponse = response;
+                        if (typeof response === 'string') {
+                            try {
+                                jsonResponse = JSON.parse(response);
+                            } catch (e) {
+                                console.error('Failed to parse JSON response:', e);
+                                showAutoSaveNotification('Draft save failed (invalid response)', true);
+                                return;
+                            }
+                        }
+
+                        if (jsonResponse && jsonResponse.success) {
+                            // Always update CSRF token if provided (even for existing drafts)
+                            if (jsonResponse.new_csrf_token) {
+                                $('input[name="csrf_token"]').val(jsonResponse.new_csrf_token);
+                                localStorage.setItem('csrf_token', jsonResponse.new_csrf_token);
+
+                                // Update token in local draft data
+                                const draft = localStorage.getItem(DRAFT_KEY);
+                                if (draft) {
+                                    const data = JSON.parse(draft);
+                                    data.csrf_token = jsonResponse.new_csrf_token;
+                                    localStorage.setItem(DRAFT_KEY, JSON.stringify(data));
+                                }
+                            }
+
                             // Update the post_id if this is a new draft
-                            if (response.post_id && !$('#post_id').val()) {
-                                $('#post_id').val(response.post_id);
+                            if (jsonResponse.post_id && !$('#post_id').val()) {
+                                $('#post_id').val(jsonResponse.post_id);
                                 // Update local storage with the post_id
                                 const draft = localStorage.getItem(DRAFT_KEY);
                                 if (draft) {
                                     const data = JSON.parse(draft);
-                                    data.post_id = response.post_id;
+                                    data.post_id = jsonResponse.post_id;
                                     localStorage.setItem(DRAFT_KEY, JSON.stringify(data));
                                 }
                                 updateDraftUI(true);
                             }
 
-                            lastSavedData = JSON.stringify(data);
-                            showAutoSaveNotification(response.message || 'Draft saved');
+                            // Update last saved data with current form state
+                            lastSavedData = JSON.stringify(collectFormData());
+
+                            // Show success notification
+                            showAutoSaveNotification(jsonResponse.message || 'Draft saved');
+
+                            // Update save status
+                            updateSaveStatus(false);
                         } else {
-                            showAutoSaveNotification(response?.message || 'Draft save failed', true);
+                            // Handle error response
+                            const errorMsg = jsonResponse?.message || 'Draft save failed';
+                            showAutoSaveNotification(errorMsg, true);
+
+                            if (jsonResponse?.new_csrf_token) {
+                                // Even on failure, update CSRF token if provided
+                                $('input[name="csrf_token"]').val(jsonResponse.new_csrf_token);
+                                localStorage.setItem('csrf_token', jsonResponse.new_csrf_token);
+                            }
                         }
                     },
                     error: function(xhr, status, error) {
@@ -1062,12 +1177,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
                             error: error,
                             responseText: xhr.responseText
                         });
+
+                        // Try to parse response for CSRF token even on error
+                        try {
+                            const errorResponse = JSON.parse(xhr.responseText);
+                            if (errorResponse?.new_csrf_token) {
+                                $('input[name="csrf_token"]').val(errorResponse.new_csrf_token);
+                                localStorage.setItem('csrf_token', errorResponse.new_csrf_token);
+                            }
+                        } catch (e) {
+                            console.log('Could not parse error response for CSRF token');
+                        }
+
                         showAutoSaveNotification('Saved locally (server unavailable)', true);
+                        updateSaveStatus(false, true); // Indicate error state
                     },
                     complete: function() {
                         console.log('Auto-save completed');
                         isAutoSaving = false;
-                        updateSaveStatus(false);
                     }
                 });
             }
@@ -1117,41 +1244,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
 
             // Form submission handler
             $('form[name="addpost"]').submit(function(e) {
-                // Get the current draft ID
-                const draft = localStorage.getItem(DRAFT_KEY);
-                if (draft) {
-                    const data = JSON.parse(draft);
-                    if (data.post_id) {
-                        // Add the post_id to the form before submission
-                        $('<input>').attr({
-                            type: 'hidden',
-                            name: 'post_id',
-                            value: data.post_id
-                        }).appendTo(this);
-                    }
+                // Only prevent default for AJAX submissions (auto-saves)
+                if ($(this).find('[name="draft"]').length && $(this).find('[name="draft"]').val() === '1') {
+                    // This is an auto-save, let the AJAX handler deal with it
+                    return true;
                 }
 
-                // Validate reporter selection
-                if ($('#useStaticReporter').is(':checked')) {
-                    $('#reporter').val('');
-                    if ($('#staticReporter').val().trim() === '') {
-                        alert('Please enter a reporter name');
-                        e.preventDefault();
-                        return false;
-                    }
-                } else {
-                    if ($('#reporter').val() === '' || $('#reporter').val() === '0') {
-                        alert('Please select a reporter from the dropdown');
-                        e.preventDefault();
-                        return false;
-                    }
-                }
-
-                // Clear draft if this is a publish action
-                if (!$(this).find('[name="draft"]').length) {
-                    clearLocalDraft();
-                }
-
+                // For regular submissions, let the form submit normally
+                // The PHP redirect will handle the page refresh
                 return true;
             });
 
