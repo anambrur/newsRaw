@@ -18,7 +18,8 @@ if (strlen($_SESSION['login']) == 0) {
         $imageseo = $_POST['imageseo'];
         $seomkey = $_POST['seomkey'];
         $photocap = $_POST['photocap'];
-        $UpdationDate = date('Y-m-d H:i:s', strtotime($_POST['UpdationDate']));
+        $UpdationDate = $UpdationDate = !empty($_POST['UpdationDate']) ?
+            date('Y-m-d H:i:s', strtotime($_POST['UpdationDate'])) : (isset($row['UpdationDate']) ? $row['UpdationDate'] : date('Y-m-d H:i:s'));
 
 
         // Initialize reporter variables
@@ -384,10 +385,11 @@ if (strlen($_SESSION['login']) == 0) {
                                             </div>
                                         </div>
                                         <div class="form-group m-b-20">
-                                            <label for="exampleInputEmail1">Date</label>
+                                            <label for="updationDate">Update Date</label>
                                             <input type="datetime-local" class="form-control" id="updationDate"
                                                 name="UpdationDate"
-                                                value="<?php echo !empty($row['UpdationDate']) ? date('Y-m-d\TH:i', strtotime($row['UpdationDate'])) : date('Y-m-d\TH:i'); ?>">
+                                                value="<?php echo !empty($row['UpdationDate']) ?
+                                                            date('Y-m-d\TH:i', strtotime($row['UpdationDate'])) : ''; ?>">
                                         </div>
 
 
