@@ -18,7 +18,7 @@ if (strlen($_SESSION['login']) == 0) {
         $imageseo = $_POST['imageseo'];
         $seomkey = $_POST['seomkey'];
         $photocap = $_POST['photocap'];
-        $UpdationDate = $UpdationDate = !empty($_POST['UpdationDate']) ?
+        $UpdationDate = !empty($_POST['UpdationDate']) ?
             date('Y-m-d H:i:s', strtotime($_POST['UpdationDate'])) : (isset($row['UpdationDate']) ? $row['UpdationDate'] : date('Y-m-d H:i:s'));
 
 
@@ -388,8 +388,7 @@ if (strlen($_SESSION['login']) == 0) {
                                             <label for="updationDate">Update Date</label>
                                             <input type="datetime-local" class="form-control" id="updationDate"
                                                 name="UpdationDate"
-                                                value="<?php echo !empty($row['UpdationDate']) ?
-                                                            date('Y-m-d\TH:i', strtotime($row['UpdationDate'])) : ''; ?>">
+                                                value="<?php echo($row['UpdationDate'])?>">
                                         </div>
 
 
