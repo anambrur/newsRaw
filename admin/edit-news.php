@@ -51,6 +51,10 @@ if (strlen($_SESSION['login']) == 0) {
             $status = 2; // Draft
         }
 
+        if(!empty($scheduledPublish)) {
+            $status = (strtotime($scheduledPublish) <= time()) ? 1 : 3;
+        }
+
         $postid = intval($_GET['pid']);
 
 
