@@ -15,14 +15,23 @@ if (strlen($_SESSION['login']) == 0) {
       $error = "Something went wrong . Please try again.";
     }
   }
+  if ($_GET['action'] = 'moveToBin') {
+    $postid = intval($_GET['pid']);
+    $query = mysqli_query($con, "update tblposts set Is_Active=4 where id='$postid'");
+    if ($query) {
+      $msg = "Post moved to bin successfully ";
+    } else {
+      $error = "Something went wrong . Please try again.";
+    }
+  }
 
 
   // Code for Forever deletionparmdel
-  if ($_GET['presid']) {
-    $id = intval($_GET['presid']);
-    $query = mysqli_query($con, "delete from  tblposts  where id='$id'");
-    $delmsg = "Post deleted forever";
-  }
+  // if ($_GET['presid']) {
+  //   $id = intval($_GET['presid']);
+  //   $query = mysqli_query($con, "delete from  tblposts  where id='$id'");
+  //   $delmsg = "Post deleted forever";
+  // }
 
 ?>
   <!DOCTYPE html>
@@ -169,7 +178,7 @@ if (strlen($_SESSION['login']) == 0) {
                                 <a href="edit-news.php?pid=<?php echo htmlentities($row['postid']); ?>">
                                   <button type="button" class="btn btn-primary">Edit Post</button>
                                 </a>
-                                <a href="draft-posts.php?presid=<?php echo htmlentities($row['postid']); ?>&&action=perdel" onclick="return confirm('Do you really want to delete ?')"><button type="button" class="btn btn-danger">Delete This Post</button></a>
+                                <a href="draft-posts.php?presid=<?php echo htmlentities($row['postid']); ?>&&action=moveToBin" onclick="return confirm('Do you really want to move to bin ?')"><button type="button" class="btn btn-danger">Move To Bin</button></a>
                               </td>
                             </tr>
                         <?php }
