@@ -18,7 +18,7 @@ if (strlen($_SESSION['login']) == 0) {
         $imageseo = $_POST['imageseo'];
         $seomkey = $_POST['seomkey'];
         $photocap = $_POST['photocap'];
-        $postingdate = $_POST['PostingDate'];
+        $UpdationDate = date('Y-m-d H:i:s', strtotime($_POST['UpdationDate']));
 
 
         // Initialize reporter variables
@@ -97,7 +97,7 @@ if (strlen($_SESSION['login']) == 0) {
         PostTitle='$posttitle',
         CategoryId='$catid',
         PostDetails='$postdetails',
-        UpdationDate='$postingdate',
+        UpdationDate='$UpdationDate',
         PostUrl='$url',
         Is_Active='$status',
         On_Sportlingt='$On_Sportlingt',
@@ -385,7 +385,9 @@ if (strlen($_SESSION['login']) == 0) {
                                         </div>
                                         <div class="form-group m-b-20">
                                             <label for="exampleInputEmail1">Date</label>
-                                            <input type="datetime-local" class="form-control" id="photocap" value="<?php echo htmlentities($row['PostingDate']); ?>" name="PostingDate" placeholder="Enter Date">
+                                            <input type="datetime-local" class="form-control" id="updationDate"
+                                                name="UpdationDate"
+                                                value="<?php echo !empty($row['UpdationDate']) ? date('Y-m-d\TH:i', strtotime($row['UpdationDate'])) : date('Y-m-d\TH:i'); ?>">
                                         </div>
 
 
