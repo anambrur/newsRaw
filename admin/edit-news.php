@@ -384,6 +384,12 @@ if (strlen($_SESSION['login']) == 0) {
                                                 </div>
                                             </div>
                                         </div>
+                                        <?php 
+                                        echo "<pre>";
+                                        print_r($row);
+                                        echo $row['UpdationDate'];
+                                        echo "</pre>";
+                                        ?>
                                         <div class="form-group m-b-20">
                                             <label for="updationDate">Update Date</label>
                                             <input type="datetime-local" class="form-control" id="updationDate"
