@@ -254,7 +254,7 @@ if (strlen($_SESSION['login']) == 0) {
                             </div>
                             <?php
                             $postid = intval($_GET['pid']);
-                            $query = mysqli_query($con, "select tblposts.id as postid,tblposts.PostImage, tblposts.On_Slider,tblposts.PostingDate, tblposts.On_Sportlingt, tblposts.On_Article, tblposts.On_Gfeed, tblposts.On_Save, tblposts.PostTitle as title,tblposts.PostDetails,tblcategory.CategoryName as category,tblcategory.id as catid,tblsubcategory.SubCategoryId as subcatid,tblsubcategory.Subcategory as subcategory,tblposts.repoter,tblposts.source,tblposts.subtitle,tblposts.photocap,tblposts.seoshort,tblposts.imageseo,tblposts.seomkey from tblposts left join tblcategory on tblcategory.id=tblposts.CategoryId left join tblsubcategory on tblsubcategory.SubCategoryId=tblposts.SubCategoryId where tblposts.id='$postid'");
+                            $query = mysqli_query($con, "select tblposts.id as postid,tblposts.PostImage, tblposts.On_Slider,tblposts.PostingDate,tblposts.UpdateDate, tblposts.On_Sportlingt, tblposts.On_Article, tblposts.On_Gfeed, tblposts.On_Save, tblposts.PostTitle as title,tblposts.PostDetails,tblcategory.CategoryName as category,tblcategory.id as catid,tblsubcategory.SubCategoryId as subcatid,tblsubcategory.Subcategory as subcategory,tblposts.repoter,tblposts.source,tblposts.subtitle,tblposts.photocap,tblposts.seoshort,tblposts.imageseo,tblposts.seomkey from tblposts left join tblcategory on tblcategory.id=tblposts.CategoryId left join tblsubcategory on tblsubcategory.SubCategoryId=tblposts.SubCategoryId where tblposts.id='$postid'");
                             while ($row = mysqli_fetch_array($query)) {
                             ?>
                                 <div class="row">
@@ -384,7 +384,7 @@ if (strlen($_SESSION['login']) == 0) {
                                                 </div>
                                             </div>
                                         </div>
-                                        <?php 
+                                        <?php
                                         echo "<pre>";
                                         print_r($row);
                                         echo $row['UpdationDate'];
@@ -394,7 +394,8 @@ if (strlen($_SESSION['login']) == 0) {
                                             <label for="updationDate">Update Date</label>
                                             <input type="datetime-local" class="form-control" id="updationDate"
                                                 name="UpdationDate"
-                                                value="<?php echo htmlentities($row['UpdationDate'])?>">
+                                                value="<?php echo !empty($row['UpdationDate']) ?
+                                                            date('Y-m-d\TH:i', strtotime($row['UpdationDate'])) : ''; ?>">
                                         </div>
 
 
