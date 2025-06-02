@@ -388,7 +388,7 @@ if (strlen($_SESSION['login']) == 0) {
                                             <label for="updationDate">Update Date</label>
                                             <input type="datetime-local" class="form-control" id="updationDate"
                                                 name="UpdationDate"
-                                                value="<?php echo($row['UpdationDate'])?>">
+                                                value="<?php echo htmlentities($row['UpdationDate'])?>">
                                         </div>
 
 
