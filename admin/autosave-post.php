@@ -31,7 +31,8 @@ $On_Slider = $On_Sportlingt = $On_Article = $On_Gfeed = $On_Save = 0;
 $postId = 0;
 
 // Function to safely handle file uploads (same as in your main file)
-function handleFileUpload($fileInput, $uploadDir, $allowedExtensions) {
+function handleFileUpload($fileInput, $uploadDir, $allowedExtensions)
+{
     // Skip file requirement for drafts
     if (!isset($_FILES[$fileInput])) {
         return [false, "No file uploaded"];
@@ -229,37 +230,40 @@ try {
         $insertQuery = mysqli_prepare(
             $con,
             "INSERT INTO tblposts 
-            (PostTitle, CategoryId, PostDetails, PostUrl, Is_Active, On_Slider, 
-             On_Sportlingt, On_Article, On_Gfeed, On_Save, PostImage, repoter, reporterName, source, subtitle, photocap, seoshort, imageseo, seomkey, PostingDate, UpdationDate, ScheduledPublish, IsAutosave) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    (PostTitle, CategoryId, PostDetails, PostUrl, Is_Active, On_Slider, 
+     On_Sportlingt, On_Article, On_Gfeed, On_Save, PostImage, repoter, reporterName, source, subtitle, photocap, seoshort, imageseo, seomkey, PostingDate, UpdationDate, ScheduledPublish, IsAutosave) 
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
         );
 
+        // Type string explanation:
+        // s = string, i = integer
+        // Count the number of parameters - should match the number of ? above
         mysqli_stmt_bind_param(
             $insertQuery,
-            'sisssiiiiisissssssssssi',
-            $posttitle,
-            $catid,
-            $postdetails,
-            $url,
-            $status,
-            $On_Slider,
-            $On_Sportlingt,
-            $On_Article,
-            $On_Gfeed,
-            $On_Save,
-            $imgnewfile,
-            $reporter,
-            $reporterName,
-            $source,
-            $subtitle,
-            $photocap,
-            $seoshort,
-            $imageseo,
-            $seomkey,
-            $date,
-            $date,
-            $scheduledPublish,
-            $isAutosave
+            'sisssiiiiisissssssssssi', // 23 characters for 23 parameters
+            $posttitle,        // s
+            $catid,            // i
+            $postdetails,      // s
+            $url,              // s
+            $status,           // s (Is_Active could be string or integer depending on your DB)
+            $On_Slider,        // i
+            $On_Sportlingt,    // i
+            $On_Article,       // i
+            $On_Gfeed,         // i
+            $On_Save,          // i
+            $imgnewfile,       // s
+            $reporter,         // i
+            $reporterName,     // s
+            $source,           // s
+            $subtitle,         // s
+            $photocap,         // s
+            $seoshort,         // s
+            $imageseo,         // s
+            $seomkey,          // s
+            $date,             // s
+            $date,             // s
+            $scheduledPublish, // s
+            $isAutosave        // i
         );
 
         if (!mysqli_stmt_execute($insertQuery)) {
@@ -289,7 +293,6 @@ try {
         'post_id' => $postId
     ]);
     exit;
-
 } catch (Exception $e) {
     // Return error response
     header('Content-Type: application/json');
