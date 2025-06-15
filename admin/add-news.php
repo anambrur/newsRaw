@@ -167,7 +167,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
             // Handle file upload
             $imgnewfile = null;
             $uploadSuccess = true;
-            $date = date('Y-m-d h:i:s');
+            $date = date('Y-m-d H:i:s');
 
             if (isset($_FILES['postimage']) && $_FILES['postimage']['error'] === UPLOAD_ERR_OK) {
                 $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
