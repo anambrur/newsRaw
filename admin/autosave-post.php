@@ -146,7 +146,7 @@ try {
     // Handle file upload
     $imgnewfile = null;
     $uploadSuccess = true;
-    $date = date('Y-m-d h:i:s');
+    $date = date('Y-m-d H:i:s');
 
     // Handle file upload only if a file was actually uploaded
     if (isset($_FILES['postimage']) && $_FILES['postimage']['error'] === UPLOAD_ERR_OK) {
