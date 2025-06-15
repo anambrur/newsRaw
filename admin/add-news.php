@@ -172,6 +172,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
         $scheduledPublish = null;
         if (!empty($_POST['scheduled_publish'])) {
             $scheduledPublish = date('Y-m-d H:i:s', strtotime($_POST['scheduled_publish']));
+            
         }
 
         // Set Is_Active based on submission type and scheduling
@@ -194,7 +195,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['submit']) || isset($
             // Initialize variables
             $imgnewfile = null;
             $uploadSuccess = true;
-            $date = date('Y-m-d h:i:s');
+            $date = date('Y-m-d H:i:s');
 
             // Handle file upload only if:
             // 1. This is NOT a draft save OR
