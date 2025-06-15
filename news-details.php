@@ -189,7 +189,7 @@ currently supported by Chrome and Opera */
                                                   </h2>
                                              </div>
                                              <div class="pDate">
-                                                  <p>প্রকাশিত: <?php echo BanglaConverter::en2bn(date('d/m/Y H:i:s', strtotime($row['postingdate']))); ?></p>
+                                                  <p>প্রকাশিত: <?php echo BanglaConverter::en2bn(date('d/m/Y h:i:s A', strtotime($row['postingdate']))); ?></p>
                                              </div>
                                         </div>
                                         <div class="col-sm-4">
