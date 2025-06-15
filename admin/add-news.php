@@ -224,8 +224,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                                 photocap = ?, 
                                 seoshort = ?, 
                                 imageseo = ?, 
-                                seomkey = ?, 
-                                UpdationDate = ?, 
+                                seomkey = ?,  
                                 ScheduledPublish = ?,
                                 IsAutosave = 0
                             WHERE id = ?"
@@ -252,13 +251,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                             $seoshort,         // s
                             $imageseo,         // s
                             $seomkey,          // s
-                            $date,             // s
                             $scheduledPublish, // s
                             $postId            // i
                         ];
 
                         // Create type string
-                        $types = 'sissiiiiiisisssssssssi';
+                        $types = 'sissiiiiiisissssssssi';
 
                         mysqli_stmt_bind_param($updateQuery, $types, ...$params);
 

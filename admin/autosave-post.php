@@ -181,7 +181,6 @@ try {
             seoshort = ?, 
             imageseo = ?, 
             seomkey = ?, 
-            UpdationDate = ?, 
             ScheduledPublish = ?,
             IsAutosave = ?
         WHERE id = ?";
@@ -208,14 +207,13 @@ try {
             $seoshort,         // s
             $imageseo,         // s
             $seomkey,          // s
-            $date,             // s
             $scheduledPublish, // s
             $isAutosave,       // i
             $postId            // i
         ];
 
         // Build type string
-        $types = 'sissiiiiisisssssssssii';
+        $types = 'sissiiiiisissssssssii';
 
         // Bind parameters
         mysqli_stmt_bind_param($updateQuery, $types, ...$params);
