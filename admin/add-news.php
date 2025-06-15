@@ -30,6 +30,74 @@ $posttitle = $catid = $postdetails = $reporter = $subtitle = $source = $photocap
 $seoshort = $imageseo = $seomkey = $imgnewfile = '';
 $On_Slider = $On_Sportlingt = $On_Article = $On_Gfeed = $On_Save = 0;
 
+
+
+// After your other includes in add-news.php
+function handleFileUpload($fileInput, $uploadDir, $allowedExtensions)
+{
+    // Skip file requirement for drafts
+    if (!isset($_FILES[$fileInput])) {
+        return [false, "No file uploaded"];
+    }
+
+    $file = $_FILES[$fileInput];
+
+    // Check for upload errors
+    if ($file['error'] !== UPLOAD_ERR_OK) {
+        if ($file['error'] === UPLOAD_ERR_NO_FILE) {
+            return [false, "No file selected"];
+        }
+        return [false, "File upload error: " . $file['error']];
+    }
+
+    // Get file info
+    $fileName = $file['name'];
+    $fileTmp = $file['tmp_name'];
+    $fileSize = $file['size'];
+    $fileExt = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+
+    // Validate extension
+    if (!in_array($fileExt, $allowedExtensions)) {
+        return [false, "Invalid file format. Only " . implode(', ', $allowedExtensions) . " allowed."];
+    }
+
+    // Validate MIME type
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    $mime = finfo_file($finfo, $fileTmp);
+    $allowedMimes = [
+        'jpg' => 'image/jpeg',
+        'jpeg' => 'image/jpeg',
+        'png' => 'image/png',
+        'gif' => 'image/gif',
+        'webp' => 'image/webp'
+    ];
+
+    if (!in_array($mime, $allowedMimes)) {
+        return [false, "Invalid file content. File doesn't match its extension."];
+    }
+
+    // Validate file size (5MB max)
+    if ($fileSize > 5242880) {
+        return [false, "File size exceeds 5MB limit."];
+    }
+
+    // Check upload directory
+    if (!is_dir($uploadDir) || !is_writable($uploadDir)) {
+        return [false, "Upload directory doesn't exist or isn't writable."];
+    }
+
+    // Generate unique filename
+    $newFileName = "news_image_" . md5($fileName . microtime()) . '.' . $fileExt;
+    $destination = rtrim($uploadDir, '/') . '/' . $newFileName;
+
+    // Move the file
+    if (!move_uploaded_file($fileTmp, $destination)) {
+        return [false, "Failed to move uploaded file."];
+    }
+
+    return [true, $newFileName];
+}
+
 // Process form submission (only for non-draft submissions)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
     // Validate CSRF token for main form submission
@@ -190,7 +258,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                         ];
 
                         // Create type string
-                        $types = 'sissiiiiiisisssssssssi'; 
+                        $types = 'sissiiiiiisisssssssssi';
 
                         mysqli_stmt_bind_param($updateQuery, $types, ...$params);
 
@@ -978,4 +1046,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
         });
     </script>
 </body>
+
 </html>
