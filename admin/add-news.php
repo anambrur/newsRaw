@@ -679,8 +679,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                                 </div>
 
                                 <button type="submit" name="submit" class="btn btn-success waves-effect waves-light">Publish Post</button>
-                                <button type="button" id="saveDraftBtn" class="btn btn-primary waves-effect waves-light">Save as Draft</button>
-                                <button type="button" id="resetFormBtn" class="btn btn-danger waves-effect waves-light mt-2">Reset Form</button>
+                                <button type="button" id="saveDraftBtn" class="btn btn-primary waves-effect waves-light mb-2">Save as Draft</button>
+                                <button type="button" id="resetFormBtn" class="btn btn-danger waves-effect waves-light">Reset Form</button>
                                 </form>
                             </div>
                         </div>
