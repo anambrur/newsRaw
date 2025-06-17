@@ -679,7 +679,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                                 </div>
 
                                 <button type="submit" name="submit" class="btn btn-success waves-effect waves-light">Publish Post</button>
-                                <button type="button" id="saveDraftBtn" class="btn btn-primary waves-effect waves-light mb-2">Save as Draft</button>
+                                <button type="button" id="saveDraftBtn" class="btn btn-primary waves-effect waves-light">Save as Draft</button>
                                 <button type="button" id="resetFormBtn" class="btn btn-danger waves-effect waves-light">Reset Form</button>
                                 </form>
                             </div>
@@ -841,7 +841,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
             // Update UI based on draft status
             function updateDraftUI(isDraft) {
                 if (isDraft) {
-                    $('button[name="submit"]').text('Update Published Post');
+                    $('button[name="submit"]').text('Published Post');
                     $('#draft-status').text('Editing draft').show();
                 } else {
                     $('button[name="submit"]').text('Publish Post');
