@@ -680,7 +680,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
 
                                 <button type="submit" name="submit" class="btn btn-success waves-effect waves-light">Publish Post</button>
                                 <button type="button" id="saveDraftBtn" class="btn btn-primary waves-effect waves-light">Save as Draft</button>
-                                <button type="button" id="resetFormBtn" class="btn btn-danger waves-effect waves-light">Reset Form</button>
+                                <button type="button" id="resetFormBtn" class="btn btn-danger waves-effect waves-light mt-2">Reset Form</button>
                                 </form>
                             </div>
                         </div>
@@ -699,6 +699,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
     <script src="../plugins/jquery.filer/js/jquery.filer.min.js"></script>
     <script src="../plugins/select2/js/select2.min.js"></script>
     <script src="../plugins/switchery/switchery.min.js"></script>
+
+    <!-- SweetAlert2 JS -->
+    <script src="assets/js/sweetalert2@11.js"></script>
 
     <script>
         $(document).ready(function() {
@@ -1044,37 +1047,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
             setInterval(saveToLocalDraft, 300000);
 
 
-            // Add this function to your JavaScript code
+            // Enhanced reset function with SweetAlert
             function resetForm() {
-                if (confirm('Are you sure you want to reset the form? This will clear all unsaved changes.')) {
-                    // Clear local storage
-                    localStorage.removeItem(DRAFT_KEY);
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: "This will clear all unsaved changes and cannot be undone!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Yes, reset it!',
+                    cancelButtonText: 'No, keep changes',
+                    reverseButtons: true
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Clear local storage
+                        localStorage.removeItem(DRAFT_KEY);
 
-                    // Reset form fields
-                    $('form[name="addpost"]')[0].reset();
-                    $('.summernote').summernote('code', '');
-                    $('#post_id').val('');
-                    $('#output').attr('src', '');
+                        // Reset form fields
+                        $('form[name="addpost"]')[0].reset();
+                        $('.summernote').summernote('code', '');
+                        $('#post_id').val('');
+                        $('#output').attr('src', '');
 
-                    // Reset checkboxes
-                    $('#test3, #test4, #test5, #test6, #test7').prop('checked', false);
+                        // Reset checkboxes
+                        $('#test3, #test4, #test5, #test6, #test7').prop('checked', false);
 
-                    // Reset reporter fields
-                    $('#useStaticReporter').prop('checked', false);
-                    $('#reporterDropdownContainer').show();
-                    $('#staticReporterContainer').hide();
-                    $('#reporter').val('').trigger('change');
-                    $('#staticReporter').val('');
+                        // Reset reporter fields
+                        $('#useStaticReporter').prop('checked', false);
+                        $('#reporterDropdownContainer').show();
+                        $('#staticReporterContainer').hide();
+                        $('#reporter').val('').trigger('change');
+                        $('#staticReporter').val('');
 
-                    // Reset last saved data
-                    lastSavedData = JSON.stringify(collectFormData());
+                        // Reset last saved data
+                        lastSavedData = JSON.stringify(collectFormData());
 
-                    // Update UI
-                    updateDraftUI(false);
-                    updateSaveStatus(false);
+                        // Update UI
+                        updateDraftUI(false);
+                        updateSaveStatus(false);
 
-                    showAutoSaveNotification('Form has been reset');
-                }
+                        // Show success message
+                        Swal.fire(
+                            'Reset!',
+                            'Your form has been reset.',
+                            'success'
+                        );
+                    }
+                });
             }
 
             // Add click handler for the reset button
