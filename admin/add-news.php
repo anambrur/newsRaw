@@ -1051,7 +1051,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
             function resetForm() {
                 Swal.fire({
                     title: 'Are you sure?',
-                    text: "This will clear all unsaved changes and cannot be undone!",
+                    text: "This will clear all form data!",
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: '#3085d6',
