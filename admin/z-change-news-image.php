@@ -60,7 +60,7 @@ if (strlen($_SESSION['login']) == 0) {
             //rename the image file
             $imgnewfile = uniqid($imgfile) . $extension;
             // Code for move image into directory
-            move_uploaded_file($_FILES["postimage"]["tmp_name"], "images/postimages/big-image/" . $imgnewfile);
+            move_uploaded_file($_FILES["postimage"]["tmp_name"], "images/postimages/" . $imgnewfile);
 
 
             $postid = intval($_GET['pid']);
