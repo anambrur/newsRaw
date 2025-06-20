@@ -742,16 +742,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                 }
             });
 
-            // Auto-save system implementation
-            const DRAFT_KEY = '<?php echo DRAFT_KEY; ?>';
-            let autoSaveInterval;
-            const AUTO_SAVE_INTERVAL = 30000; // 30 seconds
-            let isAutoSaving = false;
-            let lastSavedData = null;
-            let changeTimer;
-            let typingTimer;
+            // Manual draft save button - now just saves to localStorage
+            $('#saveDraftBtn').click(function() {
+                const formData = collectFormData();
+                localStorage.setItem(DRAFT_KEY, JSON.stringify(formData));
+                showAutoSaveNotification('Draft saved locally');
+            });
 
-            // Function to collect form data
+            // Form submission handler
+            $('form[name="addpost"]').submit(function(e) {
+                // Validate reporter selection
+                if ($('#useStaticReporter').is(':checked')) {
+                    $('#reporter').val('');
+                    if ($('#staticReporter').val().trim() === '') {
+                        alert('Please enter a reporter name');
+                        e.preventDefault();
+                        return false;
+                    }
+                } else {
+                    if ($('#reporter').val() === '' || $('#reporter').val() === '0') {
+                        alert('Please select a reporter from the dropdown');
+                        e.preventDefault();
+                        return false;
+                    }
+                }
+                return true;
+            });
+
+            // Function to collect form data (still needed for manual save)
             function collectFormData() {
                 return {
                     post_id: $('#post_id').val(),
@@ -776,276 +794,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                 };
             }
 
-            // Function to check if form has changes
-            function hasFormChanged() {
-                const currentData = JSON.stringify(collectFormData());
-                return lastSavedData !== currentData;
-            }
-
-            // Show auto-save notification
+            // Show notification (still available for manual saves)
             function showAutoSaveNotification(message, isError = false) {
                 const notification = $(`<div class="alert ${isError ? 'alert-danger' : 'alert-info'}" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999;">
-                    ${message}
-                </div>`);
+            ${message}
+        </div>`);
 
                 $('body').append(notification);
                 setTimeout(() => notification.fadeOut(500, () => notification.remove()), 3000);
             }
-
-            // Save to local storage
-            function saveToLocalDraft() {
-                const formData = collectFormData();
-                localStorage.setItem(DRAFT_KEY, JSON.stringify(formData));
-                console.log('Draft saved locally');
-            }
-
-            // Load from local storage
-            function loadFromLocalDraft() {
-                const draft = localStorage.getItem(DRAFT_KEY);
-                if (draft) {
-                    const data = JSON.parse(draft);
-
-                    // Restore form fields
-                    $('#post_id').val(data.post_id || '');
-                    $('#posttitle').val(data.posttitle);
-                    $('#category').val(data.category);
-                    $('.summernote').summernote('code', data.postdescription);
-                    $('#subtitle').val(data.subtitle);
-                    $('#source').val(data.source);
-                    $('#photocap').val(data.photocap);
-                    $('#seoshort').val(data.seoshort);
-                    $('#imageseo').val(data.imageseo);
-                    $('#seomkey').val(data.seomkey);
-                    $('#test3').prop('checked', data.test === 'value1');
-                    $('#test4').prop('checked', data.sport === 'value1');
-                    $('#test5').prop('checked', data.article === 'value1');
-                    $('#test6').prop('checked', data.googlefeed === 'value1');
-                    $('#test7').prop('checked', data.saveme === 'value1');
-                    $('#scheduled_publish').val(data.scheduled_publish);
-                    $('#useStaticReporter').prop('checked', data.useStaticReporter === 'on');
-                    $('#staticReporter').val(data.static_reporter);
-                    $('#reporter').val(data.reporter);
-
-                    showAutoSaveNotification('Recovered unsaved draft from local storage');
-
-                    // Update last saved data
-                    lastSavedData = JSON.stringify(data);
-
-                    // Update UI to show we're editing a draft
-                    updateDraftUI(true);
-                } else {
-                    updateDraftUI(false);
-                }
-            }
-
-            // Update UI based on draft status
-            function updateDraftUI(isDraft) {
-                if (isDraft) {
-                    $('button[name="submit"]').text('Published Post');
-                    $('#draft-status').text('Editing draft').show();
-                } else {
-                    $('button[name="submit"]').text('Publish Post');
-                    $('#draft-status').hide();
-                }
-            }
-
-            // Clear local draft
-            function clearLocalDraft() {
-                localStorage.removeItem(DRAFT_KEY);
-                updateDraftUI(false);
-            }
-
-            // Auto-save function
-            function autoSaveDraft() {
-                if (isAutoSaving) {
-                    console.log('Auto-save already in progress');
-                    return;
-                }
-
-                if (!hasFormChanged()) {
-                    console.log('No changes detected, skipping auto-save');
-                    return;
-                }
-
-                console.log('Starting auto-save...');
-                isAutoSaving = true;
-                updateSaveStatus(true);
-
-                // First save to localStorage
-                saveToLocalDraft();
-                console.log('Local draft saved');
-
-                // Prepare FormData
-                const formData = new FormData();
-                const data = collectFormData();
-
-                console.log('Collected form data:', data);
-
-                Object.keys(data).forEach(key => {
-                    formData.append(key, data[key]);
-                });
-
-                const fileInput = document.getElementById('postimage');
-                if (fileInput.files.length > 0) {
-                    console.log('Including file in upload:', fileInput.files[0].name);
-                    formData.append('postimage', fileInput.files[0]);
-                } else {
-                    console.log('No file selected - sending without file');
-                    formData.append('postimage', '');
-                }
-
-                console.log('Sending to server...');
-
-                $.ajax({
-                    url: 'autosave-post.php',
-                    type: 'POST',
-                    data: formData,
-                    processData: false,
-                    contentType: false,
-                    success: function(response, status, xhr) {
-                        console.log('Server response:', response);
-
-                        if (response && response.success) {
-                            // Update the post_id if this is a new draft
-                            if (response.post_id && !$('#post_id').val()) {
-                                $('#post_id').val(response.post_id);
-                                // Update local storage with the post_id
-                                const draft = localStorage.getItem(DRAFT_KEY);
-                                if (draft) {
-                                    const data = JSON.parse(draft);
-                                    data.post_id = response.post_id;
-                                    localStorage.setItem(DRAFT_KEY, JSON.stringify(data));
-                                }
-                                updateDraftUI(true);
-                            }
-
-                            lastSavedData = JSON.stringify(data);
-                            showAutoSaveNotification(response.message || 'Draft saved');
-                        } else {
-                            showAutoSaveNotification(response?.message || 'Draft save failed', true);
-                        }
-                    },
-                    error: function(xhr, status, error) {
-                        console.error('AJAX error:', {
-                            status: xhr.status,
-                            error: error,
-                            responseText: xhr.responseText
-                        });
-                        showAutoSaveNotification('Saved locally (server unavailable)', true);
-                    },
-                    complete: function() {
-                        console.log('Auto-save completed');
-                        isAutoSaving = false;
-                        updateSaveStatus(false);
-                    }
-                });
-            }
-
-            // Update save status indicator
-            function updateSaveStatus(isSaving, isError = false) {
-                const indicator = $('#save-status');
-                if (isSaving) {
-                    indicator.html('<i class="fa fa-spinner fa-spin"></i> Saving...').css('color', 'orange');
-                } else if (isError) {
-                    indicator.html('<i class="fa fa-warning"></i> Saved locally').css('color', '#ff9800');
-                } else {
-                    indicator.html('<i class="fa fa-check"></i> All changes saved').css('color', 'green');
-                }
-                setTimeout(() => indicator.html(''), 5000);
-            }
-
-            // Initialize auto-save
-            function initAutoSave() {
-                // Start auto-save interval
-                autoSaveInterval = setInterval(autoSaveDraft, AUTO_SAVE_INTERVAL);
-
-                // Also save when leaving the page
-                $(window).on('beforeunload', function(e) {
-                    if (hasFormChanged()) {
-                        saveToLocalDraft();
-
-                        const data = collectFormData();
-                        const formData = new FormData();
-
-                        Object.keys(data).forEach(key => {
-                            formData.append(key, data[key]);
-                        });
-
-                        if (navigator.sendBeacon) {
-                            navigator.sendBeacon('autosave-post.php', formData);
-                        }
-
-                        return 'You have unsaved changes. A draft has been saved locally.';
-                    }
-                });
-
-                // Store initial data
-                lastSavedData = JSON.stringify(collectFormData());
-            }
-
-            // Manual draft save button
-            $('#saveDraftBtn').click(function() {
-                autoSaveDraft();
-            });
-
-            // Form submission handler
-            $('form[name="addpost"]').submit(function(e) {
-                // Validate reporter selection
-                if ($('#useStaticReporter').is(':checked')) {
-                    $('#reporter').val('');
-                    if ($('#staticReporter').val().trim() === '') {
-                        alert('Please enter a reporter name');
-                        e.preventDefault();
-                        return false;
-                    }
-                } else {
-                    if ($('#reporter').val() === '' || $('#reporter').val() === '0') {
-                        alert('Please select a reporter from the dropdown');
-                        e.preventDefault();
-                        return false;
-                    }
-                }
-
-                // Clear draft if this is a publish action
-                clearLocalDraft();
-                return true;
-            });
-
-            // Add save status indicator to DOM
-            $('form[name="addpost"]').prepend('<div id="save-status" style="position: fixed; bottom: 10px; left: 10px; z-index: 9999; background: white; padding: 5px 10px; border-radius: 3px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); font-size: 13px;"></div>');
-
-            // Add draft status indicator
-            $('form[name="addpost"]').prepend('<div id="draft-status" style="display: none; position: fixed; bottom: 40px; left: 10px; z-index: 9999; background: #e3f2fd; padding: 5px 10px; border-radius: 3px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); font-size: 13px;"></div>');
-
-            // Load any existing draft on page load
-            loadFromLocalDraft();
-
-            // Initialize the auto-save system
-            initAutoSave();
-
-            // Auto-save when summernote content changes (with delay)
-            $('.summernote').on('summernote.change', function() {
-                clearTimeout(typingTimer);
-                typingTimer = setTimeout(() => {
-                    if (hasFormChanged()) {
-                        autoSaveDraft();
-                    }
-                }, 5000); // Save 5 seconds after last change
-            });
-
-            // Save when other form fields change (with debounce)
-            $('input, select, textarea').not('.summernote').on('change input', function() {
-                clearTimeout(changeTimer);
-                changeTimer = setTimeout(() => {
-                    if (hasFormChanged()) {
-                        autoSaveDraft();
-                    }
-                }, 2000);
-            });
-
-            // Also save periodically regardless of changes (every 5 minutes)
-            setInterval(saveToLocalDraft, 300000);
-
 
             // Enhanced reset function with SweetAlert
             function resetForm() {
@@ -1079,13 +836,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                         $('#staticReporterContainer').hide();
                         $('#reporter').val('').trigger('change');
                         $('#staticReporter').val('');
-
-                        // Reset last saved data
-                        lastSavedData = JSON.stringify(collectFormData());
-
-                        // Update UI
-                        updateDraftUI(false);
-                        updateSaveStatus(false);
 
                         // Show success message
                         Swal.fire(
