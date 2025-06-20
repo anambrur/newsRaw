@@ -985,7 +985,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
 
             // Manual draft save button
             $('#saveDraftBtn').click(function() {
-                autoSaveDraft();
+                // autoSaveDraft();
             });
 
             // Form submission handler
@@ -1028,7 +1028,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                 clearTimeout(typingTimer);
                 typingTimer = setTimeout(() => {
                     if (hasFormChanged()) {
-                        autoSaveDraft();
+                        // autoSaveDraft();
                     }
                 }, 5000); // Save 5 seconds after last change
             });
@@ -1038,13 +1038,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                 clearTimeout(changeTimer);
                 changeTimer = setTimeout(() => {
                     if (hasFormChanged()) {
-                        autoSaveDraft();
+                        // autoSaveDraft();
                     }
                 }, 2000);
             });
 
             // Also save periodically regardless of changes (every 5 minutes)
-            setInterval(saveToLocalDraft, 300000);
+            // setInterval(saveToLocalDraft, 300000);
 
 
             // Enhanced reset function with SweetAlert
