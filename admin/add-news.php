@@ -204,28 +204,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                     if ($postId > 0) {
                         // Update existing post using direct query
                         $query = "UPDATE tblposts SET 
-            PostTitle = '" . mysqli_real_escape_string($con, $posttitle) . "', 
-            CategoryId = '" . intval($catid) . "', 
-            PostDetails = '" . mysqli_real_escape_string($con, $postdetails) . "', 
-            PostUrl = '" . mysqli_real_escape_string($con, $url) . "', 
-            Is_Active = '" . intval($status) . "', 
-            On_Slider = '" . intval($On_Slider) . "', 
-            On_Sportlingt = '" . intval($On_Sportlingt) . "', 
-            On_Article = '" . intval($On_Article) . "', 
-            On_Gfeed = '" . intval($On_Gfeed) . "', 
-            On_Save = '" . intval($On_Save) . "',
-            PostImage = '" . mysqli_real_escape_string($con, $imgnewfile) . "',
-            repoter = " . ($reporter !== null ? intval($reporter) : 'NULL') . ", 
-            reporterName = " . ($reporterName !== null ? "'" . mysqli_real_escape_string($con, $reporterName) . "'" : 'NULL') . ", 
-            source = '" . mysqli_real_escape_string($con, $source) . "', 
-            subtitle = '" . mysqli_real_escape_string($con, $subtitle) . "', 
-            photocap = '" . mysqli_real_escape_string($con, $photocap) . "', 
-            seoshort = '" . mysqli_real_escape_string($con, $seoshort) . "', 
-            imageseo = '" . mysqli_real_escape_string($con, $imageseo) . "', 
-            seomkey = '" . mysqli_real_escape_string($con, $seomkey) . "',  
-            ScheduledPublish = " . ($scheduledPublish !== null ? "'" . mysqli_real_escape_string($con, $scheduledPublish) . "'" : 'NULL') . ",
-            IsAutosave = 0
-        WHERE id = " . intval($postId);
+                            PostTitle = '" . mysqli_real_escape_string($con, $posttitle) . "', 
+                            CategoryId = '" . intval($catid) . "', 
+                            PostDetails = '" . mysqli_real_escape_string($con, $postdetails) . "', 
+                            PostUrl = '" . mysqli_real_escape_string($con, $url) . "', 
+                            Is_Active = '" . intval($status) . "', 
+                            On_Slider = '" . intval($On_Slider) . "', 
+                            On_Sportlingt = '" . intval($On_Sportlingt) . "', 
+                            On_Article = '" . intval($On_Article) . "', 
+                            On_Gfeed = '" . intval($On_Gfeed) . "', 
+                            On_Save = '" . intval($On_Save) . "',
+                            PostImage = '" . mysqli_real_escape_string($con, $imgnewfile) . "',
+                            repoter = " . ($reporter !== null ? intval($reporter) : 'NULL') . ", 
+                            reporterName = " . ($reporterName !== null ? "'" . mysqli_real_escape_string($con, $reporterName) . "'" : 'NULL') . ", 
+                            source = '" . mysqli_real_escape_string($con, $source) . "', 
+                            subtitle = '" . mysqli_real_escape_string($con, $subtitle) . "', 
+                            photocap = '" . mysqli_real_escape_string($con, $photocap) . "', 
+                            seoshort = '" . mysqli_real_escape_string($con, $seoshort) . "', 
+                            imageseo = '" . mysqli_real_escape_string($con, $imageseo) . "', 
+                            seomkey = '" . mysqli_real_escape_string($con, $seomkey) . "',  
+                            ScheduledPublish = " . ($scheduledPublish !== null ? "'" . mysqli_real_escape_string($con, $scheduledPublish) . "'" : 'NULL') . ",
+                            IsAutosave = 0
+                        WHERE id = " . intval($postId);
 
                         if (mysqli_query($con, $query)) {
                             $msg = "Post successfully updated";
@@ -246,35 +246,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                     } else {
                         // Insert new post using direct query
                         $query = "INSERT INTO tblposts 
-            (PostTitle, CategoryId, PostDetails, PostUrl, Is_Active, On_Slider, 
-             On_Sportlingt, On_Article, On_Gfeed, On_Save, PostImage, repoter, 
-             reporterName, source, subtitle, photocap, seoshort, imageseo, 
-             seomkey, PostingDate, UpdationDate, ScheduledPublish, IsAutosave) 
-            VALUES (
-                '" . mysqli_real_escape_string($con, $posttitle) . "',
-                '" . intval($catid) . "',
-                '" . mysqli_real_escape_string($con, $postdetails) . "',
-                '" . mysqli_real_escape_string($con, $url) . "',
-                '" . intval($status) . "',
-                '" . intval($On_Slider) . "',
-                '" . intval($On_Sportlingt) . "',
-                '" . intval($On_Article) . "',
-                '" . intval($On_Gfeed) . "',
-                '" . intval($On_Save) . "',
-                '" . mysqli_real_escape_string($con, $imgnewfile) . "',
-                " . ($reporter !== null ? intval($reporter) : 'NULL') . ",
-                " . ($reporterName !== null ? "'" . mysqli_real_escape_string($con, $reporterName) . "'" : 'NULL') . ",
-                '" . mysqli_real_escape_string($con, $source) . "',
-                '" . mysqli_real_escape_string($con, $subtitle) . "',
-                '" . mysqli_real_escape_string($con, $photocap) . "',
-                '" . mysqli_real_escape_string($con, $seoshort) . "',
-                '" . mysqli_real_escape_string($con, $imageseo) . "',
-                '" . mysqli_real_escape_string($con, $seomkey) . "',
-                '" . mysqli_real_escape_string($con, $date) . "',
-                '" . mysqli_real_escape_string($con, $date) . "',
-                " . ($scheduledPublish !== null ? "'" . mysqli_real_escape_string($con, $scheduledPublish) . "'" : 'NULL') . ",
-                0
-            )";
+                            (PostTitle, CategoryId, PostDetails, PostUrl, Is_Active, On_Slider, 
+                            On_Sportlingt, On_Article, On_Gfeed, On_Save, PostImage, repoter, 
+                            reporterName, source, subtitle, photocap, seoshort, imageseo, 
+                            seomkey, PostingDate, UpdationDate, ScheduledPublish, IsAutosave) 
+                            VALUES (
+                                '" . mysqli_real_escape_string($con, $posttitle) . "',
+                                '" . intval($catid) . "',
+                                '" . mysqli_real_escape_string($con, $postdetails) . "',
+                                '" . mysqli_real_escape_string($con, $url) . "',
+                                '" . intval($status) . "',
+                                '" . intval($On_Slider) . "',
+                                '" . intval($On_Sportlingt) . "',
+                                '" . intval($On_Article) . "',
+                                '" . intval($On_Gfeed) . "',
+                                '" . intval($On_Save) . "',
+                                '" . mysqli_real_escape_string($con, $imgnewfile) . "',
+                                " . ($reporter !== null ? intval($reporter) : 'NULL') . ",
+                                " . ($reporterName !== null ? "'" . mysqli_real_escape_string($con, $reporterName) . "'" : 'NULL') . ",
+                                '" . mysqli_real_escape_string($con, $source) . "',
+                                '" . mysqli_real_escape_string($con, $subtitle) . "',
+                                '" . mysqli_real_escape_string($con, $photocap) . "',
+                                '" . mysqli_real_escape_string($con, $seoshort) . "',
+                                '" . mysqli_real_escape_string($con, $imageseo) . "',
+                                '" . mysqli_real_escape_string($con, $seomkey) . "',
+                                '" . mysqli_real_escape_string($con, $date) . "',
+                                '" . mysqli_real_escape_string($con, $date) . "',
+                                " . ($scheduledPublish !== null ? "'" . mysqli_real_escape_string($con, $scheduledPublish) . "'" : 'NULL') . ",
+                                0
+                            )";
 
                         if (mysqli_query($con, $query)) {
                             $postId = mysqli_insert_id($con);
