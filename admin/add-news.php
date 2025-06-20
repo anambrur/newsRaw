@@ -206,59 +206,84 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                         $updateQuery = mysqli_prepare(
                             $con,
                             "UPDATE tblposts SET 
-                                PostTitle = ?, 
-                                CategoryId = ?, 
-                                PostDetails = ?, 
-                                PostUrl = ?, 
-                                Is_Active = ?, 
-                                On_Slider = ?, 
-                                On_Sportlingt = ?, 
-                                On_Article = ?, 
-                                On_Gfeed = ?, 
-                                On_Save = ?,
-                                PostImage = ?,
-                                repoter = ?, 
-                                reporterName = ?, 
-                                source = ?, 
-                                subtitle = ?, 
-                                photocap = ?, 
-                                seoshort = ?, 
-                                imageseo = ?, 
-                                seomkey = ?,  
-                                ScheduledPublish = ?,
-                                IsAutosave = 0
-                            WHERE id = ?"
+            PostTitle = ?, 
+            CategoryId = ?, 
+            PostDetails = ?, 
+            PostUrl = ?, 
+            Is_Active = ?, 
+            On_Slider = ?, 
+            On_Sportlingt = ?, 
+            On_Article = ?, 
+            On_Gfeed = ?, 
+            On_Save = ?,
+            PostImage = ?,
+            repoter = ?, 
+            reporterName = ?, 
+            source = ?, 
+            subtitle = ?, 
+            photocap = ?, 
+            seoshort = ?, 
+            imageseo = ?, 
+            seomkey = ?,  
+            ScheduledPublish = ?,
+            IsAutosave = 0
+        WHERE id = ?"
                         );
 
                         // Prepare parameters
                         $params = [
-                            $posttitle,        // s string
-                            $catid,            // i
-                            $postdetails,      // s
-                            $url,              // s
-                            $status,           // i
-                            $On_Slider,        // i
-                            $On_Sportlingt,    // i
-                            $On_Article,       // i
-                            $On_Gfeed,         // i
-                            $On_Save,          // i
-                            $imgnewfile,       // s
-                            $reporter,         // i
-                            $reporterName,     // s
-                            $source,           // s
-                            $subtitle,         // s
-                            $photocap,         // s
-                            $seoshort,         // s
-                            $imageseo,         // s
-                            $seomkey,          // s
-                            $scheduledPublish, // s
-                            $postId            // i
+                            $posttitle,        // string
+                            $catid,            // int
+                            $postdetails,      // string
+                            $url,              // string
+                            $status,           // int
+                            $On_Slider,        // int
+                            $On_Sportlingt,    // int
+                            $On_Article,       // int
+                            $On_Gfeed,         // int
+                            $On_Save,          // int
+                            $imgnewfile,       // string
+                            $reporter,         // int
+                            $reporterName,     // string
+                            $source,           // string
+                            $subtitle,         // string
+                            $photocap,         // string
+                            $seoshort,         // string
+                            $imageseo,         // string
+                            $seomkey,          // string
+                            $scheduledPublish, // string
+                            $postId            // int
                         ];
 
                         // Create type string
-                        $types = 'sissiiiiiisissssssssi';
+                        $types = 'sisssiiiiisissssssssi';
 
-                        mysqli_stmt_bind_param($updateQuery, $types, ...$params);
+                        // Bind parameters individually instead of using splat operator
+                        mysqli_stmt_bind_param(
+                            $updateQuery,
+                            $types,
+                            $params[0],
+                            $params[1],
+                            $params[2],
+                            $params[3],
+                            $params[4],
+                            $params[5],
+                            $params[6],
+                            $params[7],
+                            $params[8],
+                            $params[9],
+                            $params[10],
+                            $params[11],
+                            $params[12],
+                            $params[13],
+                            $params[14],
+                            $params[15],
+                            $params[16],
+                            $params[17],
+                            $params[18],
+                            $params[19],
+                            $params[20]
+                        );
 
                         if (mysqli_stmt_execute($updateQuery)) {
                             $msg = "Post successfully updated";
