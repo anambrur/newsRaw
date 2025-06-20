@@ -384,7 +384,7 @@ if (strlen($_SESSION['login']) == 0) {
                                                 <div class="card-box">
                                                     <img src="images/postimages/<?php echo htmlentities($row['PostImage']); ?>" width="100%" />
                                                     <br /><br />
-                                                    <a href="change-image.php?pid=<?php echo htmlentities($row['postid']); ?>">Update News Image</a>
+                                                    <a href="z-change-news-image.php?pid=<?php echo htmlentities($row['postid']); ?>">Update News Image</a>
                                                 </div>
                                             </div>
                                         </div>
