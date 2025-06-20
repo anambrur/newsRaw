@@ -65,7 +65,7 @@ if (strlen($_SESSION['login']) == 0) {
 
             $postid = intval($_GET['pid']);
             $query = mysqli_query($con, "update tblposts set PostImage='$imgnewfile' where id='$postid'");
-            $resizeObj = new resize("images/postimages/big-image/" . $imgnewfile);
+            $resizeObj = new resize("images/postimages/" . $imgnewfile);
             $resizeObj->resizeImage(200, 114, 'exact');
             $resizeObj->saveImage("images/postimages/thumbnail/" . $imgnewfile, 100);
             if ($query) {
@@ -220,7 +220,7 @@ if (strlen($_SESSION['login']) == 0) {
                                                             <div class="col-sm-12">
                                                                 <div class="card-box">
                                                                     <h4 class="m-b-30 m-t-0 header-title"><b>Current Post Image</b></h4>
-                                                                    <img src="images/postimages/big-image/<?php echo htmlentities($row['PostImage']); ?>" width="300" />
+                                                                    <img src="images/postimages/<?php echo htmlentities($row['PostImage']); ?>" width="300" />
                                                                     <br />
 
                                                                 </div>
