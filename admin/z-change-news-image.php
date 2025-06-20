@@ -2,7 +2,8 @@
 session_start();
 include('includes/config.php');
 include('includes/resizeLib.php');
-error_reporting(0);
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
 function imageGenerator($input, $overlay, $output)
 {
@@ -65,9 +66,28 @@ if (strlen($_SESSION['login']) == 0) {
 
             $postid = intval($_GET['pid']);
             $query = mysqli_query($con, "update tblposts set PostImage='$imgnewfile' where id='$postid'");
+            // $resizeObj = new resize("images/postimages/" . $imgnewfile);
+            // $resizeObj->resizeImage(200, 114, 'exact');
+            // $resizeObj->saveImage("images/thumb/" . $imgnewfile, 100);
+
             $resizeObj = new resize("images/postimages/" . $imgnewfile);
+            if (!file_exists("images/postimages/" . $imgnewfile)) {
+                die("Original image not found at: images/postimages/" . $imgnewfile);
+            }
+
             $resizeObj->resizeImage(200, 114, 'exact');
-            $resizeObj->saveImage("images/thumb/" . $imgnewfile, 100);
+
+            $thumbPath = "images/thumb/" . $imgnewfile;
+            if (!file_exists("images/thumb")) {
+                mkdir("images/thumb", 0755, true);
+            }
+            $resizeObj->saveImage($thumbPath, 100);
+
+
+            if (!file_exists($thumbPath)) {
+                die("Failed to save thumb image at: " . $thumbPath);
+            }
+
             if ($query) {
                 $msg = "News Feature Image updated ";
             } else {
