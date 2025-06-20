@@ -67,7 +67,7 @@ if (strlen($_SESSION['login']) == 0) {
             $query = mysqli_query($con, "update tblposts set PostImage='$imgnewfile' where id='$postid'");
             $resizeObj = new resize("images/postimages/" . $imgnewfile);
             $resizeObj->resizeImage(200, 114, 'exact');
-            $resizeObj->saveImage("images/postimages/thumb/" . $imgnewfile, 100);
+            $resizeObj->saveImage("images/thumb/" . $imgnewfile, 100);
             if ($query) {
                 $msg = "News Feature Image updated ";
             } else {
