@@ -202,10 +202,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
 
                 if (empty($error)) {
                     if ($postId > 0) {
-                        // Update existing post (convert draft to published)
-                        $updateQuery = mysqli_prepare(
-                            $con,
-                            "UPDATE tblposts SET 
+                        // Update existing post
+                        $query = "UPDATE tblposts SET 
             PostTitle = ?, 
             CategoryId = ?, 
             PostDetails = ?, 
@@ -227,70 +225,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
             seomkey = ?,  
             ScheduledPublish = ?,
             IsAutosave = 0
-        WHERE id = ?"
-                        );
+        WHERE id = ?";
 
-                        // Prepare parameters
-                        $params = [
-                            $posttitle,        // string
-                            $catid,            // int
-                            $postdetails,      // string
-                            $url,              // string
-                            $status,           // int
-                            $On_Slider,        // int
-                            $On_Sportlingt,    // int
-                            $On_Article,       // int
-                            $On_Gfeed,         // int
-                            $On_Save,          // int
-                            $imgnewfile,       // string
-                            $reporter,         // int
-                            $reporterName,     // string
-                            $source,           // string
-                            $subtitle,         // string
-                            $photocap,         // string
-                            $seoshort,         // string
-                            $imageseo,         // string
-                            $seomkey,          // string
-                            $scheduledPublish, // string
-                            $postId            // int
-                        ];
+                        $stmt = mysqli_prepare($con, $query);
 
-                        // Create type string
-                        $types = 'sisssiiiiisissssssssi';
-
-                        // Bind parameters individually instead of using splat operator
+                        // Bind parameters directly (not using array)
                         mysqli_stmt_bind_param(
-                            $updateQuery,
-                            $types,
-                            $params[0],
-                            $params[1],
-                            $params[2],
-                            $params[3],
-                            $params[4],
-                            $params[5],
-                            $params[6],
-                            $params[7],
-                            $params[8],
-                            $params[9],
-                            $params[10],
-                            $params[11],
-                            $params[12],
-                            $params[13],
-                            $params[14],
-                            $params[15],
-                            $params[16],
-                            $params[17],
-                            $params[18],
-                            $params[19],
-                            $params[20]
+                            $stmt,
+                            'sisssiiiiisissssssssi',
+                            $posttitle,
+                            $catid,
+                            $postdetails,
+                            $url,
+                            $status,
+                            $On_Slider,
+                            $On_Sportlingt,
+                            $On_Article,
+                            $On_Gfeed,
+                            $On_Save,
+                            $imgnewfile,
+                            $reporter,
+                            $reporterName,
+                            $source,
+                            $subtitle,
+                            $photocap,
+                            $seoshort,
+                            $imageseo,
+                            $seomkey,
+                            $scheduledPublish,
+                            $postId
                         );
 
-                        if (mysqli_stmt_execute($updateQuery)) {
+                        if (mysqli_stmt_execute($stmt)) {
                             $msg = "Post successfully updated";
-                            // Clear local draft after successful publish
                             echo '<script>localStorage.removeItem("' . DRAFT_KEY . '");</script>';
 
-                            // Create thumbnail if new image was uploaded
                             if ($imgnewfile) {
                                 try {
                                     $resizeObj = new resize("images/postimages/" . $imgnewfile);
@@ -305,16 +274,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                         }
                     } else {
                         // Insert new post
-                        $insertQuery = mysqli_prepare(
-                            $con,
-                            "INSERT INTO tblposts 
-                            (PostTitle, CategoryId, PostDetails, PostUrl, Is_Active, On_Slider, 
-                             On_Sportlingt, On_Article, On_Gfeed, On_Save, PostImage, repoter, reporterName, source, subtitle, photocap, seoshort, imageseo, seomkey, PostingDate, UpdationDate, ScheduledPublish, IsAutosave) 
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-                        );
+                        $query = "INSERT INTO tblposts 
+            (PostTitle, CategoryId, PostDetails, PostUrl, Is_Active, On_Slider, 
+             On_Sportlingt, On_Article, On_Gfeed, On_Save, PostImage, repoter, 
+             reporterName, source, subtitle, photocap, seoshort, imageseo, 
+             seomkey, PostingDate, UpdationDate, ScheduledPublish, IsAutosave) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
+                        $stmt = mysqli_prepare($con, $query);
+
+                        $date = date('Y-m-d H:i:s');
+
+                        // Bind parameters directly
                         mysqli_stmt_bind_param(
-                            $insertQuery,
+                            $stmt,
                             'sisssiiiiisissssssssssi',
                             $posttitle,
                             $catid,
@@ -338,14 +311,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                             $date,
                             $date,
                             $scheduledPublish,
-                            0 // Not an autosave
+                            0
                         );
 
-                        if (mysqli_stmt_execute($insertQuery)) {
+                        if (mysqli_stmt_execute($stmt)) {
                             $postId = mysqli_insert_id($con);
                             $msg = "Post successfully published";
 
-                            // Create thumbnail if image was uploaded
                             if ($imgnewfile) {
                                 try {
                                     $resizeObj = new resize("images/postimages/" . $imgnewfile);
