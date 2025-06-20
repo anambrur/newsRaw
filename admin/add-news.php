@@ -896,49 +896,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
 
                 console.log('Sending to server...');
 
-                $.ajax({
-                    url: 'autosave-post.php',
-                    type: 'POST',
-                    data: formData,
-                    processData: false,
-                    contentType: false,
-                    success: function(response, status, xhr) {
-                        console.log('Server response:', response);
+                // $.ajax({
+                //     url: 'autosave-post.php',
+                //     type: 'POST',
+                //     data: formData,
+                //     processData: false,
+                //     contentType: false,
+                //     success: function(response, status, xhr) {
+                //         console.log('Server response:', response);
 
-                        if (response && response.success) {
-                            // Update the post_id if this is a new draft
-                            if (response.post_id && !$('#post_id').val()) {
-                                $('#post_id').val(response.post_id);
-                                // Update local storage with the post_id
-                                const draft = localStorage.getItem(DRAFT_KEY);
-                                if (draft) {
-                                    const data = JSON.parse(draft);
-                                    data.post_id = response.post_id;
-                                    localStorage.setItem(DRAFT_KEY, JSON.stringify(data));
-                                }
-                                updateDraftUI(true);
-                            }
+                //         if (response && response.success) {
+                //             // Update the post_id if this is a new draft
+                //             if (response.post_id && !$('#post_id').val()) {
+                //                 $('#post_id').val(response.post_id);
+                //                 // Update local storage with the post_id
+                //                 const draft = localStorage.getItem(DRAFT_KEY);
+                //                 if (draft) {
+                //                     const data = JSON.parse(draft);
+                //                     data.post_id = response.post_id;
+                //                     localStorage.setItem(DRAFT_KEY, JSON.stringify(data));
+                //                 }
+                //                 updateDraftUI(true);
+                //             }
 
-                            lastSavedData = JSON.stringify(data);
-                            showAutoSaveNotification(response.message || 'Draft saved');
-                        } else {
-                            showAutoSaveNotification(response?.message || 'Draft save failed', true);
-                        }
-                    },
-                    error: function(xhr, status, error) {
-                        console.error('AJAX error:', {
-                            status: xhr.status,
-                            error: error,
-                            responseText: xhr.responseText
-                        });
-                        showAutoSaveNotification('Saved locally (server unavailable)', true);
-                    },
-                    complete: function() {
-                        console.log('Auto-save completed');
-                        isAutoSaving = false;
-                        updateSaveStatus(false);
-                    }
-                });
+                //             lastSavedData = JSON.stringify(data);
+                //             showAutoSaveNotification(response.message || 'Draft saved');
+                //         } else {
+                //             showAutoSaveNotification(response?.message || 'Draft save failed', true);
+                //         }
+                //     },
+                //     error: function(xhr, status, error) {
+                //         console.error('AJAX error:', {
+                //             status: xhr.status,
+                //             error: error,
+                //             responseText: xhr.responseText
+                //         });
+                //         showAutoSaveNotification('Saved locally (server unavailable)', true);
+                //     },
+                //     complete: function() {
+                //         console.log('Auto-save completed');
+                //         isAutoSaving = false;
+                //         updateSaveStatus(false);
+                //     }
+                // });
             }
 
             // Update save status indicator
@@ -957,30 +957,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
             // Initialize auto-save
             function initAutoSave() {
                 // Start auto-save interval
-                autoSaveInterval = setInterval(autoSaveDraft, AUTO_SAVE_INTERVAL);
+                // autoSaveInterval = setInterval(autoSaveDraft, AUTO_SAVE_INTERVAL);
 
-                // Also save when leaving the page
-                $(window).on('beforeunload', function(e) {
-                    if (hasFormChanged()) {
-                        saveToLocalDraft();
+                // // Also save when leaving the page
+                // $(window).on('beforeunload', function(e) {
+                //     if (hasFormChanged()) {
+                //         saveToLocalDraft();
 
-                        const data = collectFormData();
-                        const formData = new FormData();
+                //         const data = collectFormData();
+                //         const formData = new FormData();
 
-                        Object.keys(data).forEach(key => {
-                            formData.append(key, data[key]);
-                        });
+                //         Object.keys(data).forEach(key => {
+                //             formData.append(key, data[key]);
+                //         });
 
-                        if (navigator.sendBeacon) {
-                            navigator.sendBeacon('autosave-post.php', formData);
-                        }
+                //         if (navigator.sendBeacon) {
+                //             navigator.sendBeacon('autosave-post.php', formData);
+                //         }
 
-                        return 'You have unsaved changes. A draft has been saved locally.';
-                    }
-                });
+                //         return 'You have unsaved changes. A draft has been saved locally.';
+                //     }
+                // });
 
-                // Store initial data
-                lastSavedData = JSON.stringify(collectFormData());
+                // // Store initial data
+                // lastSavedData = JSON.stringify(collectFormData());
             }
 
             // Manual draft save button
