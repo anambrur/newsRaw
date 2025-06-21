@@ -268,9 +268,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                             // Create thumbnail if new image was uploaded
                             if ($imgnewfile) {
                                 try {
-                                    $resizeObj = new resize("images/postimages/" . $imgnewfile);
-                                    $resizeObj->resizeImage(300, 200, 'exact');
-                                    $resizeObj->saveImage("images/thumb/" . $imgnewfile, 100);
+                                    $resizeObj = new ImageResize("images/postimages/" . $imgnewfile);
+                                    $resizeObj->resize(300, 200, 'exact');
+                                    $resizeObj->save("images/thumb/" . $imgnewfile, 100);
                                 } catch (Exception $e) {
                                     error_log("Thumbnail creation failed: " . $e->getMessage());
                                 }
@@ -323,9 +323,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                             // Create thumbnail if image was uploaded
                             if ($imgnewfile) {
                                 try {
-                                    $resizeObj = new resize("images/postimages/" . $imgnewfile);
-                                    $resizeObj->resizeImage(300, 200, 'exact');
-                                    $resizeObj->saveImage("images/thumb/" . $imgnewfile, 100);
+                                    $resizeObj = new ImageResize("images/postimages/" . $imgnewfile);
+                                    $resizeObj->resize(300, 200, 'exact');
+                                    $resizeObj->save("images/thumb/" . $imgnewfile, 100);
                                 } catch (Exception $e) {
                                     error_log("Thumbnail creation failed: " . $e->getMessage());
                                 }
