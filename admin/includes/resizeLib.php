@@ -1,231 +1,256 @@
 <?php
-#========================================================================#
-#  Requires : Requires PHP5, GD library.
-#  Usage Example:
-#					 include("resize_class.php");
-#					 $resizeObj=new resize('images/cars/large/input.jpg');
-#					 $resizeObj -> resizeImage(150, 100, 0);
-#					 $resizeObj -> saveImage('images/cars/large/output.jpg', 100);
-#========================================================================#
+/**
+ * Image Resize Class
+ * Supports JPG, JPEG, PNG, GIF, and WebP formats
+ * Requires PHP GD library
+ * 
+ * Usage:
+ * $resizer = new ImageResize('path/to/image.jpg');
+ * $resizer->resize(800, 600, 'cover'); // or 'contain', 'exact', 'auto'
+ * $resizer->save('path/to/resized_image.jpg', 90); // Quality 0-100
+ */
+class ImageResize {
+    private $image;
+    private $width;
+    private $height;
+    private $imageResized;
+    private $originalInfo = [];
+    private $quality = 85;
 
+    /**
+     * Constructor - Loads the image file
+     * @param string $filename Path to image file
+     * @throws Exception If file doesn't exist, isn't readable, or isn't a valid image
+     */
+    public function __construct($filename) {
+        if (!file_exists($filename)) {
+            throw new Exception('Image file does not exist: ' . $filename);
+        }
 
-class resize
-{
-	// *** Class variables
-	private $image;
-	private $width;
-	private $height;
-	private $imageResized;
+        if (!is_readable($filename)) {
+            throw new Exception('Image file is not readable: ' . $filename);
+        }
 
-	function __construct($fileName)
-	{
-		// *** Open up the file
-		$this->image=$this->openImage($fileName);
+        $this->originalInfo = [
+            'width' => 0,
+            'height' => 0,
+            'mime' => '',
+            'format' => ''
+        ];
 
-		// *** Get width and height
-		$this->width=imagesx($this->image);
-		$this->height=imagesy($this->image);
-	}
+        $imageInfo = @getimagesize($filename);
+        if (!$imageInfo) {
+            throw new Exception('File is not a valid image: ' . $filename);
+        }
 
-	## --------------------------------------------------------
-	private function openImage($file)
-	{
-		// *** Get extension
-		$extension=strtolower(strrchr($file, '.'));
+        $this->originalInfo = [
+            'width' => $imageInfo[0],
+            'height' => $imageInfo[1],
+            'mime' => $imageInfo['mime'],
+            'format' => preg_replace('/^image\//', '', $imageInfo['mime'])
+        ];
 
-		switch($extension){
-			case '.jpg':
-			case '.jpeg':
-				$img=@imagecreatefromjpeg($file);
-				break;
-			case '.gif':
-				$img=@imagecreatefromgif($file);
-				break;
-			case '.png':
-				$img=@imagecreatefrompng($file);
-				break;
-			default:
-				$img=false;
-				break;
-		}
-		return $img;
-	}
+        $this->image = $this->openImage($filename);
+        if ($this->image === false) {
+            throw new Exception('Unable to open image: ' . $filename);
+        }
 
-	## --------------------------------------------------------
-	public function resizeImage($newWidth, $newHeight, $option="auto"){
-		// *** Get optimal width and height - based on $option
-		$optionArray=$this->getDimensions($newWidth, $newHeight, $option);
+        $this->width = $imageInfo[0];
+        $this->height = $imageInfo[1];
+    }
 
-		$optimalWidth=$optionArray['optimalWidth'];
-		$optimalHeight=$optionArray['optimalHeight'];
+    /**
+     * Open an image file and return GD resource
+     * @param string $file Path to image file
+     * @return resource|false GD image resource or false on failure
+     */
+    private function openImage($file) {
+        switch ($this->originalInfo['format']) {
+            case 'jpeg':
+            case 'jpg':
+                return @imagecreatefromjpeg($file);
+            case 'gif':
+                return @imagecreatefromgif($file);
+            case 'png':
+                return @imagecreatefrompng($file);
+            case 'webp':
+                if (function_exists('imagecreatefromwebp')) {
+                    return @imagecreatefromwebp($file);
+                }
+                throw new Exception('WebP format not supported by this server');
+            default:
+                throw new Exception('Unsupported image format: ' . $this->originalInfo['format']);
+        }
+    }
 
+    /**
+     * Resize the image
+     * @param int $newWidth Target width
+     * @param int $newHeight Target height
+     * @param string $mode Resize mode: 'cover', 'contain', 'exact', 'auto'
+     * @return void
+     */
+    public function resize($newWidth, $newHeight, $mode = 'cover') {
+        $options = $this->calcDimensions($newWidth, $newHeight, $mode);
+        
+        $this->imageResized = imagecreatetruecolor($options['width'], $options['height']);
+        
+        // Preserve transparency for PNG and GIF
+        if ($this->originalInfo['format'] == 'gif' || $this->originalInfo['format'] == 'png') {
+            imagecolortransparent($this->imageResized, imagecolorallocatealpha($this->imageResized, 0, 0, 0, 127));
+            imagealphablending($this->imageResized, false);
+            imagesavealpha($this->imageResized, true);
+        }
 
-		// *** Resample - create image canvas of x, y size
-		$this->imageResized=imagecreatetruecolor($optimalWidth, $optimalHeight);
-		imagecopyresampled($this->imageResized, $this->image, 0, 0, 0, 0, $optimalWidth, $optimalHeight, $this->width, $this->height);
+        imagecopyresampled(
+            $this->imageResized, $this->image,
+            $options['x'], $options['y'],
+            $options['src_x'], $options['src_y'],
+            $options['width'], $options['height'],
+            $options['src_w'], $options['src_h']
+        );
 
+        // Free up memory from original image
+        imagedestroy($this->image);
+    }
 
-		// *** if option is 'crop', then crop too
-		if ($option=='crop'){
-			$this->crop($optimalWidth, $optimalHeight, $newWidth, $newHeight);
-		}
-	}
+    /**
+     * Calculate dimensions for resizing
+     * @param int $newWidth Target width
+     * @param int $newHeight Target height
+     * @param string $mode Resize mode
+     * @return array Dimensions and positions
+     */
+    private function calcDimensions($newWidth, $newHeight, $mode) {
+        $src_x = 0;
+        $src_y = 0;
+        $src_w = $this->width;
+        $src_h = $this->height;
 
-	## --------------------------------------------------------
-	private function getDimensions($newWidth, $newHeight, $option){
-	   switch ($option)
-		{
-			case 'exact':
-				$optimalWidth=$newWidth;
-				$optimalHeight=$newHeight;
-				break;
-			case 'portrait':
-				$optimalWidth=$this->getSizeByFixedHeight($newHeight);
-				$optimalHeight=$newHeight;
-				break;
-			case 'landscape':
-				$optimalWidth=$newWidth;
-				$optimalHeight=$this->getSizeByFixedWidth($newWidth);
-				break;
-			case 'auto':
-				$optionArray=$this->getSizeByAuto($newWidth, $newHeight);
-				$optimalWidth=$optionArray['optimalWidth'];
-				$optimalHeight=$optionArray['optimalHeight'];
-				break;
-			case 'crop':
-				$optionArray=$this->getOptimalCrop($newWidth, $newHeight);
-				$optimalWidth=$optionArray['optimalWidth'];
-				$optimalHeight=$optionArray['optimalHeight'];
-				break;
-		}
-		return array('optimalWidth'=> $optimalWidth, 'optimalHeight'=> $optimalHeight);
-	}
+        $width = $newWidth;
+        $height = $newHeight;
+        $x = 0;
+        $y = 0;
 
-	## --------------------------------------------------------
-	private function getSizeByFixedHeight($newHeight)
-	{
-		$ratio=$this->width / $this->height;
-		$newWidth=$newHeight * $ratio;
-		return $newWidth;
-	}
-	private function getSizeByFixedWidth($newWidth)
-	{
-		$ratio=$this->height / $this->width;
-		$newHeight=$newWidth * $ratio;
-		return $newHeight;
-	}
-	private function getSizeByAuto($newWidth, $newHeight)
-	{
-		if ($this->height < $this->width)
-		// *** Image to be resized is wider (landscape)
-		{
-			$optimalWidth=$newWidth;
-			$optimalHeight=$this->getSizeByFixedWidth($newWidth);
-		}
-		elseif ($this->height > $this->width)
-		// *** Image to be resized is taller (portrait)
-		{
-			$optimalWidth=$this->getSizeByFixedHeight($newHeight);
-			$optimalHeight=$newHeight;
-		}
-		else
-		// *** Image to be resizerd is a square
-		{
-			if ($newHeight < $newWidth){
-				$optimalWidth=$newWidth;
-				$optimalHeight=$this->getSizeByFixedWidth($newWidth);
-			}else if ($newHeight > $newWidth){
-				$optimalWidth=$this->getSizeByFixedHeight($newHeight);
-				$optimalHeight=$newHeight;
-			}else{
-				// *** Sqaure being resized to a square
-				$optimalWidth=$newWidth;
-				$optimalHeight=$newHeight;
-			}
-		}
+        switch ($mode) {
+            case 'exact':
+                // Exact dimensions - may distort
+                break;
 
-		return array('optimalWidth'=> $optimalWidth, 'optimalHeight'=> $optimalHeight);
-	}
+            case 'cover':
+                // Cover - crop to fill exactly
+                $ratio = max($newWidth / $this->width, $newHeight / $this->height);
+                $src_w = round($newWidth / $ratio);
+                $src_h = round($newHeight / $ratio);
+                $src_x = ($this->width - $src_w) / 2;
+                $src_y = ($this->height - $src_h) / 2;
+                break;
 
-	## --------------------------------------------------------
+            case 'contain':
+                // Contain - fit inside dimensions
+                $ratio = min($newWidth / $this->width, $newHeight / $this->height);
+                $width = round($this->width * $ratio);
+                $height = round($this->height * $ratio);
+                $x = ($newWidth - $width) / 2;
+                $y = ($newHeight - $height) / 2;
+                break;
 
-	private function getOptimalCrop($newWidth, $newHeight)
-	{
+            case 'auto':
+            default:
+                // Auto - same as contain but don't add padding
+                $ratio = min($newWidth / $this->width, $newHeight / $this->height);
+                $width = round($this->width * $ratio);
+                $height = round($this->height * $ratio);
+                break;
+        }
 
-		$heightRatio=$this->height / $newHeight;
-		$widthRatio=$this->width /  $newWidth;
+        return [
+            'x' => $x, 'y' => $y,
+            'width' => $width, 'height' => $height,
+            'src_x' => $src_x, 'src_y' => $src_y,
+            'src_w' => $src_w, 'src_h' => $src_h
+        ];
+    }
 
-		if ($heightRatio < $widthRatio){
-			$optimalRatio=$heightRatio;
-		}else{
-			$optimalRatio=$widthRatio;
-		}
+    /**
+     * Save the resized image
+     * @param string $savePath Path to save the image
+     * @param int|null $quality Image quality (0-100)
+     * @return bool True on success
+     * @throws Exception If save fails
+     */
+    public function save($savePath, $quality = null) {
+        if (!$this->imageResized) {
+            throw new Exception('No resized image to save');
+        }
 
-		$optimalHeight=$this->height / $optimalRatio;
-		$optimalWidth=$this->width  / $optimalRatio;
+        $quality = $quality ?? $this->quality;
+        $extension = strtolower(pathinfo($savePath, PATHINFO_EXTENSION));
 
-		return array('optimalWidth'=> $optimalWidth, 'optimalHeight'=> $optimalHeight);
-	}
+        // Create directory if it doesn't exist
+        $dir = dirname($savePath);
+        if (!is_dir($dir)) {
+            if (!mkdir($dir, 0755, true)) {
+                throw new Exception('Failed to create directory: ' . $dir);
+            }
+        }
 
-	## --------------------------------------------------------
+        switch ($extension) {
+            case 'jpg':
+            case 'jpeg':
+                $success = imagejpeg($this->imageResized, $savePath, $quality);
+                break;
+            case 'gif':
+                $success = imagegif($this->imageResized, $savePath);
+                break;
+            case 'png':
+                // Convert quality from 0-100 to 0-9
+                $quality = 9 - round(($quality / 100) * 9);
+                $success = imagepng($this->imageResized, $savePath, $quality);
+                break;
+            case 'webp':
+                if (!function_exists('imagewebp')) {
+                    throw new Exception('WebP format not supported by this server');
+                }
+                $success = imagewebp($this->imageResized, $savePath, $quality);
+                break;
+            default:
+                throw new Exception('Unsupported image format for saving: ' . $extension);
+        }
 
-	private function crop($optimalWidth, $optimalHeight, $newWidth, $newHeight)
-	{
-		// *** Find center - this will be used for the crop
-		$cropStartX=( $optimalWidth / 2) - ( $newWidth /2 );
-		$cropStartY=( $optimalHeight/ 2) - ( $newHeight/2 );
+        if (!$success) {
+            throw new Exception('Failed to save image: ' . $savePath);
+        }
 
-		$crop=$this->imageResized;
-		//imagedestroy($this->imageResized);
+        imagedestroy($this->imageResized);
+        return true;
+    }
 
-		// *** Now crop from center to exact requested size
-		$this->imageResized=imagecreatetruecolor($newWidth , $newHeight);
-		imagecopyresampled($this->imageResized, $crop , 0, 0, $cropStartX, $cropStartY, $newWidth, $newHeight , $newWidth, $newHeight);
-	}
+    /**
+     * Set default image quality
+     * @param int $quality Quality (0-100)
+     */
+    public function setQuality($quality) {
+        $this->quality = max(0, min(100, $quality));
+    }
 
-	## --------------------------------------------------------
+    /**
+     * Get original image info
+     * @return array Original image information
+     */
+    public function getOriginalInfo() {
+        return $this->originalInfo;
+    }
 
-	public function saveImage($savePath, $imageQuality="100")
-	{
-		// *** Get extension
-		$extension=strrchr($savePath, '.');
-		   $extension=strtolower($extension);
-
-		switch($extension)
-		{
-			case '.jpg':
-			case '.jpeg':
-				if (imagetypes() & IMG_JPG){
-					imagejpeg($this->imageResized, $savePath, $imageQuality);
-				}
-				break;
-
-			case '.gif':
-				if (imagetypes() & IMG_GIF){
-					imagegif($this->imageResized, $savePath);
-				}
-				break;
-
-			case '.png':
-				// *** Scale quality from 0-100 to 0-9
-				$scaleQuality=round(($imageQuality/100) * 9);
-
-				// *** Invert quality setting as 0 is best, not 9
-				$invertScaleQuality=9 - $scaleQuality;
-
-				if (imagetypes() & IMG_PNG){
-					 imagepng($this->imageResized, $savePath, $invertScaleQuality);
-				}
-				break;
-
-			// ... etc
-
-			default:
-				// *** No extension - No save.
-				break;
-		}
-
-		imagedestroy($this->imageResized);
-	}
-	## --------------------------------------------------------
-}?>
+    /**
+     * Destructor - Clean up resources
+     */
+    public function __destruct() {
+        if (is_resource($this->image)) {
+            imagedestroy($this->image);
+        }
+        if (is_resource($this->imageResized)) {
+            imagedestroy($this->imageResized);
+        }
+    }
+}
