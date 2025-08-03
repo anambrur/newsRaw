@@ -99,11 +99,215 @@ function handleFileUpload($fileInput, $uploadDir, $allowedExtensions)
 }
 
 // Process form submission (only for non-draft submissions)
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
-    // Validate CSRF token for main form submission
+// if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
+//     // Validate CSRF token for main form submission
+//     if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+//         $error = "Security error: Invalid CSRF token.";
+//     } else {
+//         // Get post ID if exists
+//         $postId = isset($_POST['post_id']) ? intval($_POST['post_id']) : 0;
+
+//         // Sanitize and validate inputs
+//         $posttitle = trim($_POST['posttitle']);
+//         $catid = intval($_POST['category']);
+//         $postdetails = trim($_POST['postdescription']);
+//         $subtitle = trim($_POST['subtitle']);
+//         $source = trim($_POST['source']);
+//         $photocap = trim($_POST['photocap']);
+//         $seoshort = trim($_POST['seoshort']);
+//         $imageseo = trim($_POST['imageseo']);
+//         $seomkey = trim($_POST['seomkey']);
+
+//         // Initialize reporter variables
+//         $reporter = null;
+//         $reporterName = null;
+
+//         if (isset($_POST['useStaticReporter']) && $_POST['useStaticReporter'] === 'on') {
+//             $reporterName = trim($_POST['static_reporter']);
+//             if (empty($reporterName)) {
+//                 $error = "Please enter a reporter name";
+//             }
+//         } else {
+//             $reporter = isset($_POST['reporter']) ? intval($_POST['reporter']) : null;
+//             if ($reporter === null || $reporter === 0) {
+//                 $error = "Please select a valid reporter from the dropdown";
+//             }
+//         }
+
+//         // Generate URL slug
+//         $arr = explode(" ", $posttitle);
+//         $url = implode("-", $arr);
+
+//         // Checkboxes
+//         $On_Slider = isset($_POST['test']) && $_POST['test'] === 'value1' ? 1 : 0;
+//         $On_Sportlingt = isset($_POST['sport']) && $_POST['sport'] === 'value1' ? 1 : 0;
+//         $On_Article = isset($_POST['article']) && $_POST['article'] === 'value1' ? 1 : 0;
+//         $On_Gfeed = isset($_POST['googlefeed']) && $_POST['googlefeed'] === 'value1' ? 1 : 0;
+//         $On_Save = isset($_POST['saveme']) && $_POST['saveme'] === 'value1' ? 1 : 0;
+
+//         // Get scheduled publish time
+//         $scheduledPublish = null;
+//         if (!empty($_POST['scheduled_publish'])) {
+//             $scheduledPublish = date('Y-m-d H:i:s', strtotime($_POST['scheduled_publish']));
+//         }
+
+//         // Set Is_Active based on scheduling
+//         if (!empty($scheduledPublish)) {
+//             $status = (strtotime($scheduledPublish) <= time()) ? 1 : 3;
+//         } else {
+//             $status = 1; // Default to published
+//         }
+
+//         // Validate required fields
+//         if (empty($posttitle) || empty($catid) || empty($postdetails)) {
+//             $error = "Please fill all required fields.";
+//         }
+
+//         if (empty($error)) {
+//             // Handle file upload
+//             $imgnewfile = null;
+//             $uploadSuccess = true;
+//             $date = date('Y-m-d H:i:s');
+
+//             if (isset($_FILES['postimage']) && $_FILES['postimage']['error'] === UPLOAD_ERR_OK) {
+//                 $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+//                 list($uploadSuccess, $uploadResult) = handleFileUpload('postimage', 'images/postimages/', $allowedExtensions);
+
+//                 if (!$uploadSuccess) {
+//                     $error = $uploadResult;
+//                 } else {
+//                     $imgnewfile = $uploadResult;
+//                 }
+//             } elseif ($postId > 0) {
+//                 // If updating and no new image, keep the existing one
+//                 $existing = mysqli_query($con, "SELECT PostImage FROM tblposts WHERE id = $postId");
+//                 if ($existing && mysqli_num_rows($existing) > 0) {
+//                     $row = mysqli_fetch_assoc($existing);
+//                     $imgnewfile = $row['PostImage'];
+//                 }
+//             } else {
+//                 $error = "Please select an image for the post";
+//             }
+
+//             if (empty($error)) {
+//                 // Check for duplicate titles (only for published posts)
+//                 $checkQuery = mysqli_prepare($con, "SELECT id FROM tblposts WHERE PostTitle = ? AND id != ?");
+//                 mysqli_stmt_bind_param($checkQuery, 'si', $posttitle, $postId);
+//                 mysqli_stmt_execute($checkQuery);
+//                 mysqli_stmt_store_result($checkQuery);
+
+//                 if (mysqli_stmt_num_rows($checkQuery) > 0) {
+//                     $error = "Post title already exists. Please choose a different one.";
+//                 }
+
+//                 if (empty($error)) {
+//                     if ($postId > 0) {
+//                         // Update existing post using direct query
+//                         $query = "UPDATE tblposts SET 
+//                             PostTitle = '" . mysqli_real_escape_string($con, $posttitle) . "', 
+//                             CategoryId = '" . intval($catid) . "', 
+//                             PostDetails = '" . mysqli_real_escape_string($con, $postdetails) . "', 
+//                             PostUrl = '" . mysqli_real_escape_string($con, $url) . "', 
+//                             Is_Active = '" . intval($status) . "', 
+//                             On_Slider = '" . intval($On_Slider) . "', 
+//                             On_Sportlingt = '" . intval($On_Sportlingt) . "', 
+//                             On_Article = '" . intval($On_Article) . "', 
+//                             On_Gfeed = '" . intval($On_Gfeed) . "', 
+//                             On_Save = '" . intval($On_Save) . "',
+//                             PostImage = '" . mysqli_real_escape_string($con, $imgnewfile) . "',
+//                             repoter = " . ($reporter !== null ? intval($reporter) : 'NULL') . ", 
+//                             reporterName = " . ($reporterName !== null ? "'" . mysqli_real_escape_string($con, $reporterName) . "'" : 'NULL') . ", 
+//                             source = '" . mysqli_real_escape_string($con, $source) . "', 
+//                             subtitle = '" . mysqli_real_escape_string($con, $subtitle) . "', 
+//                             photocap = '" . mysqli_real_escape_string($con, $photocap) . "', 
+//                             seoshort = '" . mysqli_real_escape_string($con, $seoshort) . "', 
+//                             imageseo = '" . mysqli_real_escape_string($con, $imageseo) . "', 
+//                             seomkey = '" . mysqli_real_escape_string($con, $seomkey) . "',  
+//                             ScheduledPublish = " . ($scheduledPublish !== null ? "'" . mysqli_real_escape_string($con, $scheduledPublish) . "'" : 'NULL') . ",
+//                             IsAutosave = 0
+//                         WHERE id = " . intval($postId);
+
+//                         if (mysqli_query($con, $query)) {
+//                             $msg = "Post successfully updated";
+//                             echo '<script>localStorage.removeItem("' . DRAFT_KEY . '");</script>';
+
+//                             if ($imgnewfile) {
+//                                 try {
+//                                     $resizeObj = new ImageResize("images/postimages/" . $imgnewfile);
+//                                     $resizeObj->resize(300, 200, 'exact');
+//                                     $resizeObj->save("images/thumb/" . $imgnewfile, 100);
+//                                 } catch (Exception $e) {
+//                                     error_log("Thumbnail creation failed: " . $e->getMessage());
+//                                 }
+//                             }
+//                         } else {
+//                             $error = "Database error: " . mysqli_error($con);
+//                         }
+//                     } else {
+//                         // Insert new post using direct query
+//                         $query = "INSERT INTO tblposts 
+//                             (PostTitle, CategoryId, PostDetails, PostUrl, Is_Active, On_Slider, 
+//                             On_Sportlingt, On_Article, On_Gfeed, On_Save, PostImage, repoter, 
+//                             reporterName, source, subtitle, photocap, seoshort, imageseo, 
+//                             seomkey, PostingDate, UpdationDate, ScheduledPublish, IsAutosave) 
+//                             VALUES (
+//                                 '" . mysqli_real_escape_string($con, $posttitle) . "',
+//                                 '" . intval($catid) . "',
+//                                 '" . mysqli_real_escape_string($con, $postdetails) . "',
+//                                 '" . mysqli_real_escape_string($con, $url) . "',
+//                                 '" . intval($status) . "',
+//                                 '" . intval($On_Slider) . "',
+//                                 '" . intval($On_Sportlingt) . "',
+//                                 '" . intval($On_Article) . "',
+//                                 '" . intval($On_Gfeed) . "',
+//                                 '" . intval($On_Save) . "',
+//                                 '" . mysqli_real_escape_string($con, $imgnewfile) . "',
+//                                 " . ($reporter !== null ? intval($reporter) : 'NULL') . ",
+//                                 " . ($reporterName !== null ? "'" . mysqli_real_escape_string($con, $reporterName) . "'" : 'NULL') . ",
+//                                 '" . mysqli_real_escape_string($con, $source) . "',
+//                                 '" . mysqli_real_escape_string($con, $subtitle) . "',
+//                                 '" . mysqli_real_escape_string($con, $photocap) . "',
+//                                 '" . mysqli_real_escape_string($con, $seoshort) . "',
+//                                 '" . mysqli_real_escape_string($con, $imageseo) . "',
+//                                 '" . mysqli_real_escape_string($con, $seomkey) . "',
+//                                 '" . mysqli_real_escape_string($con, $date) . "',
+//                                 '" . mysqli_real_escape_string($con, $date) . "',
+//                                 " . ($scheduledPublish !== null ? "'" . mysqli_real_escape_string($con, $scheduledPublish) . "'" : 'NULL') . ",
+//                                 0
+//                             )";
+
+//                         if (mysqli_query($con, $query)) {
+//                             $postId = mysqli_insert_id($con);
+//                             $msg = "Post successfully published";
+
+//                             if ($imgnewfile) {
+//                                 try {
+//                                     $resizeObj = new ImageResize("images/postimages/" . $imgnewfile);
+//                                     $resizeObj->resize(300, 200, 'exact');
+//                                     $resizeObj->save("images/thumb/" . $imgnewfile, 100);
+//                                 } catch (Exception $e) {
+//                                     error_log("Thumbnail creation failed: " . $e->getMessage());
+//                                 }
+//                             }
+//                         } else {
+//                             $error = "Database error: " . mysqli_error($con);
+//                         }
+//                     }
+//                 }
+//             }
+//         }
+//     }
+// }
+
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Validate CSRF token for all form submissions
     if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
         $error = "Security error: Invalid CSRF token.";
     } else {
+        // Determine if this is a draft submission
+        $isDraft = isset($_POST['is_draft']) && $_POST['is_draft'] === 'true';
+
         // Get post ID if exists
         $postId = isset($_POST['post_id']) ? intval($_POST['post_id']) : 0;
 
@@ -124,12 +328,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
 
         if (isset($_POST['useStaticReporter']) && $_POST['useStaticReporter'] === 'on') {
             $reporterName = trim($_POST['static_reporter']);
-            if (empty($reporterName)) {
+            if (empty($reporterName) && !$isDraft) { // Don't require reporter name for drafts
                 $error = "Please enter a reporter name";
             }
         } else {
             $reporter = isset($_POST['reporter']) ? intval($_POST['reporter']) : null;
-            if ($reporter === null || $reporter === 0) {
+            if (($reporter === null || $reporter === 0) && !$isDraft) { // Don't require reporter for drafts
                 $error = "Please select a valid reporter from the dropdown";
             }
         }
@@ -151,16 +355,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
             $scheduledPublish = date('Y-m-d H:i:s', strtotime($_POST['scheduled_publish']));
         }
 
-        // Set Is_Active based on scheduling
-        if (!empty($scheduledPublish)) {
-            $status = (strtotime($scheduledPublish) <= time()) ? 1 : 3;
+        // Set Is_Active based on submission type and scheduling
+        if ($isDraft) {
+            $status = 2; // Draft status
+        } elseif (!empty($scheduledPublish)) {
+            $status = (strtotime($scheduledPublish) <= time()) ? 1 : 3; // 1=Published, 3=Scheduled
         } else {
             $status = 1; // Default to published
         }
 
-        // Validate required fields
+        // Validate required fields (skip some validations for drafts)
         if (empty($posttitle) || empty($catid) || empty($postdetails)) {
             $error = "Please fill all required fields.";
+        }
+
+        // Skip image validation for drafts if no image is uploaded
+        if (!$isDraft && empty($imgnewfile) && $postId == 0) {
+            if (!isset($_FILES['postimage']) || $_FILES['postimage']['error'] === UPLOAD_ERR_NO_FILE) {
+                $error = "Please select an image for the post";
+            }
         }
 
         if (empty($error)) {
@@ -185,24 +398,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                     $row = mysqli_fetch_assoc($existing);
                     $imgnewfile = $row['PostImage'];
                 }
-            } else {
-                $error = "Please select an image for the post";
             }
 
             if (empty($error)) {
                 // Check for duplicate titles (only for published posts)
-                $checkQuery = mysqli_prepare($con, "SELECT id FROM tblposts WHERE PostTitle = ? AND id != ?");
-                mysqli_stmt_bind_param($checkQuery, 'si', $posttitle, $postId);
-                mysqli_stmt_execute($checkQuery);
-                mysqli_stmt_store_result($checkQuery);
+                if (!$isDraft) {
+                    $checkQuery = mysqli_prepare($con, "SELECT id FROM tblposts WHERE PostTitle = ? AND id != ?");
+                    mysqli_stmt_bind_param($checkQuery, 'si', $posttitle, $postId);
+                    mysqli_stmt_execute($checkQuery);
+                    mysqli_stmt_store_result($checkQuery);
 
-                if (mysqli_stmt_num_rows($checkQuery) > 0) {
-                    $error = "Post title already exists. Please choose a different one.";
+                    if (mysqli_stmt_num_rows($checkQuery) > 0) {
+                        $error = "Post title already exists. Please choose a different one.";
+                    }
                 }
 
                 if (empty($error)) {
                     if ($postId > 0) {
-                        // Update existing post using direct query
+                        // Update existing post
                         $query = "UPDATE tblposts SET 
                             PostTitle = '" . mysqli_real_escape_string($con, $posttitle) . "', 
                             CategoryId = '" . intval($catid) . "', 
@@ -214,7 +427,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                             On_Article = '" . intval($On_Article) . "', 
                             On_Gfeed = '" . intval($On_Gfeed) . "', 
                             On_Save = '" . intval($On_Save) . "',
-                            PostImage = '" . mysqli_real_escape_string($con, $imgnewfile) . "',
+                            PostImage = " . ($imgnewfile ? "'" . mysqli_real_escape_string($con, $imgnewfile) . "'" : 'NULL') . ",
                             repoter = " . ($reporter !== null ? intval($reporter) : 'NULL') . ", 
                             reporterName = " . ($reporterName !== null ? "'" . mysqli_real_escape_string($con, $reporterName) . "'" : 'NULL') . ", 
                             source = '" . mysqli_real_escape_string($con, $source) . "', 
@@ -224,12 +437,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                             imageseo = '" . mysqli_real_escape_string($con, $imageseo) . "', 
                             seomkey = '" . mysqli_real_escape_string($con, $seomkey) . "',  
                             ScheduledPublish = " . ($scheduledPublish !== null ? "'" . mysqli_real_escape_string($con, $scheduledPublish) . "'" : 'NULL') . ",
-                            IsAutosave = 0
+                            IsAutosave = " . ($isDraft ? '1' : '0') . "
                         WHERE id = " . intval($postId);
 
                         if (mysqli_query($con, $query)) {
-                            $msg = "Post successfully updated";
-                            echo '<script>localStorage.removeItem("' . DRAFT_KEY . '");</script>';
+                            $msg = $isDraft ? "Draft successfully saved" : "Post successfully updated";
+                            echo '<script>localStorage.removeItem("news_draft_' . basename(__FILE__) . '");</script>';
 
                             if ($imgnewfile) {
                                 try {
@@ -244,7 +457,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                             $error = "Database error: " . mysqli_error($con);
                         }
                     } else {
-                        // Insert new post using direct query
+                        // Insert new post
                         $query = "INSERT INTO tblposts 
                             (PostTitle, CategoryId, PostDetails, PostUrl, Is_Active, On_Slider, 
                             On_Sportlingt, On_Article, On_Gfeed, On_Save, PostImage, repoter, 
@@ -261,7 +474,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                                 '" . intval($On_Article) . "',
                                 '" . intval($On_Gfeed) . "',
                                 '" . intval($On_Save) . "',
-                                '" . mysqli_real_escape_string($con, $imgnewfile) . "',
+                                " . ($imgnewfile ? "'" . mysqli_real_escape_string($con, $imgnewfile) . "'" : 'NULL') . ",
                                 " . ($reporter !== null ? intval($reporter) : 'NULL') . ",
                                 " . ($reporterName !== null ? "'" . mysqli_real_escape_string($con, $reporterName) . "'" : 'NULL') . ",
                                 '" . mysqli_real_escape_string($con, $source) . "',
@@ -273,12 +486,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                                 '" . mysqli_real_escape_string($con, $date) . "',
                                 '" . mysqli_real_escape_string($con, $date) . "',
                                 " . ($scheduledPublish !== null ? "'" . mysqli_real_escape_string($con, $scheduledPublish) . "'" : 'NULL') . ",
-                                0
+                                " . ($isDraft ? '1' : '0') . "
                             )";
 
                         if (mysqli_query($con, $query)) {
                             $postId = mysqli_insert_id($con);
-                            $msg = "Post successfully published";
+                            $msg = $isDraft ? "Draft successfully saved" : "Post successfully published";
 
                             if ($imgnewfile) {
                                 try {
@@ -299,10 +512,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
     }
 }
 
+
+
+
 // $resizeObj = new resize("images/postimages/big-image/" . $imgnewfile);
 // $resizeObj->resizeImage(300, 200, 'exact');
 // $resizeObj->saveImage("images/postimages/thumbnail/" . $imgnewfile, 100);
 ?>
+
+
+
+
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -666,7 +887,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
     <!-- SweetAlert2 JS -->
     <script src="assets/js/sweetalert2@11.js"></script>
 
-    <script>
+    <!-- <script>
         $(document).ready(function() {
             // Initialize Summernote
             $('.summernote').summernote({
@@ -812,6 +1033,233 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
 
             // Add click handler for the reset button
             $('#resetFormBtn').click(resetForm);
+        });
+    </script> -->
+
+
+    <script>
+        // Define the draft key constant
+        const DRAFT_KEY = 'news_draft_<?php echo basename(__FILE__); ?>';
+
+        $(document).ready(function() {
+            // Initialize Summernote
+            $('.summernote').summernote({
+                height: 300,
+                toolbar: [
+                    ['style', ['style']],
+                    ['font', ['bold', 'italic', 'underline', 'clear']],
+                    ['fontname', ['fontname']],
+                    ['color', ['color']],
+                    ['para', ['ul', 'ol', 'paragraph']],
+                    ['height', ['height']],
+                    ['table', ['table']],
+                    ['insert', ['link', 'picture', 'hr']],
+                    ['view', ['fullscreen', 'codeview']],
+                    ['help', ['help']]
+                ]
+            });
+
+            // Initialize Select2
+            $('.select2').select2({
+                placeholder: "Select Reporter",
+                allowClear: true
+            });
+
+            // Toggle between dropdown and static reporter
+            $('#useStaticReporter').change(function() {
+                if ($(this).is(':checked')) {
+                    $('#reporterDropdownContainer').hide();
+                    $('#staticReporterContainer').show();
+                    $('#reporter').val('').removeAttr('required');
+                } else {
+                    $('#reporterDropdownContainer').show();
+                    $('#staticReporterContainer').hide();
+                    $('#reporter').attr('required', 'required');
+                    $('#staticReporter').val('');
+                }
+            });
+
+            // Save Draft button functionality
+            $('#saveDraftBtn').click(function(e) {
+                e.preventDefault();
+
+                // Collect form data
+                const formData = new FormData($('form[name="addpost"]')[0]);
+                formData.append('is_draft', 'true');
+
+                // Save to localStorage as backup
+                const formValues = collectFormData();
+                localStorage.setItem(DRAFT_KEY, JSON.stringify(formValues));
+
+                // Submit via AJAX
+                $.ajax({
+                    url: 'add-news.php',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        // Parse the response (the PHP will echo the page again)
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(response, 'text/html');
+
+                        // Check for success message
+                        const successMsg = $(doc).find('.alert-success').text().trim();
+                        if (successMsg) {
+                            showAutoSaveNotification(successMsg);
+
+                            // Update the post ID if this was a new draft
+                            const newPostId = $(doc).find('#post_id').val();
+                            if (newPostId) {
+                                $('#post_id').val(newPostId);
+                            }
+                        } else {
+                            // Show error if any
+                            const errorMsg = $(doc).find('.alert-danger').text().trim();
+                            showAutoSaveNotification(errorMsg || 'Error saving draft', true);
+                        }
+                    },
+                    error: function() {
+                        showAutoSaveNotification('Error saving draft', true);
+                    }
+                });
+            });
+
+            // Function to collect form data
+            function collectFormData() {
+                return {
+                    post_id: $('#post_id').val(),
+                    posttitle: $('#posttitle').val(),
+                    category: $('#category').val(),
+                    postdescription: $('.summernote').summernote('code'),
+                    subtitle: $('#subtitle').val(),
+                    source: $('#source').val(),
+                    photocap: $('#photocap').val(),
+                    seoshort: $('#seoshort').val(),
+                    imageseo: $('#imageseo').val(),
+                    seomkey: $('#seomkey').val(),
+                    test: $('#test3').is(':checked') ? 'value1' : '',
+                    sport: $('#test4').is(':checked') ? 'value1' : '',
+                    article: $('#test5').is(':checked') ? 'value1' : '',
+                    googlefeed: $('#test6').is(':checked') ? 'value1' : '',
+                    saveme: $('#test7').is(':checked') ? 'value1' : '',
+                    scheduled_publish: $('#scheduled_publish').val(),
+                    useStaticReporter: $('#useStaticReporter').is(':checked') ? 'on' : '',
+                    static_reporter: $('#staticReporter').val(),
+                    reporter: $('#reporter').val()
+                };
+            }
+
+            // Show notification
+            function showAutoSaveNotification(message, isError = false) {
+                const notification = $(`<div class="alert ${isError ? 'alert-danger' : 'alert-info'}" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999;">
+                ${message}
+            </div>`);
+
+                $('body').append(notification);
+                setTimeout(() => notification.fadeOut(500, () => notification.remove()), 3000);
+            }
+
+            // Reset form function
+            function resetForm() {
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: "This will clear all form data!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Yes, reset it!',
+                    cancelButtonText: 'No, keep changes',
+                    reverseButtons: true
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Clear local storage
+                        localStorage.removeItem(DRAFT_KEY);
+
+                        // Reset form fields
+                        $('form[name="addpost"]')[0].reset();
+                        $('.summernote').summernote('code', '');
+                        $('#post_id').val('');
+                        $('#output').attr('src', '');
+
+                        // Reset checkboxes
+                        $('#test3, #test4, #test5, #test6, #test7').prop('checked', false);
+
+                        // Reset reporter fields
+                        $('#useStaticReporter').prop('checked', false);
+                        $('#reporterDropdownContainer').show();
+                        $('#staticReporterContainer').hide();
+                        $('#reporter').val('').trigger('change');
+                        $('#staticReporter').val('');
+
+                        // Show success message
+                        Swal.fire(
+                            'Reset!',
+                            'Your form has been reset.',
+                            'success'
+                        );
+                    }
+                });
+            }
+
+            // Add click handler for the reset button
+            $('#resetFormBtn').click(resetForm);
+
+            // Load draft from localStorage if available
+            const savedDraft = localStorage.getItem(DRAFT_KEY);
+            if (savedDraft) {
+                Swal.fire({
+                    title: 'Saved Draft Found',
+                    text: "Would you like to restore your last saved draft?",
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Yes, restore it!',
+                    cancelButtonText: 'No, start fresh'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        const draftData = JSON.parse(savedDraft);
+
+                        // Restore form values
+                        $('#posttitle').val(draftData.posttitle || '');
+                        $('#category').val(draftData.category || '');
+                        $('.summernote').summernote('code', draftData.postdescription || '');
+                        $('#subtitle').val(draftData.subtitle || '');
+                        $('#source').val(draftData.source || '');
+                        $('#photocap').val(draftData.photocap || '');
+                        $('#seoshort').val(draftData.seoshort || '');
+                        $('#imageseo').val(draftData.imageseo || '');
+                        $('#seomkey').val(draftData.seomkey || '');
+                        $('#post_id').val(draftData.post_id || '');
+
+                        // Restore checkboxes
+                        $('#test3').prop('checked', draftData.test === 'value1');
+                        $('#test4').prop('checked', draftData.sport === 'value1');
+                        $('#test5').prop('checked', draftData.article === 'value1');
+                        $('#test6').prop('checked', draftData.googlefeed === 'value1');
+                        $('#test7').prop('checked', draftData.saveme === 'value1');
+
+                        // Restore scheduled publish
+                        if (draftData.scheduled_publish) {
+                            $('#scheduled_publish').val(draftData.scheduled_publish);
+                        }
+
+                        // Restore reporter fields
+                        if (draftData.useStaticReporter === 'on') {
+                            $('#useStaticReporter').prop('checked', true).trigger('change');
+                            $('#staticReporter').val(draftData.static_reporter || '');
+                        } else {
+                            $('#reporter').val(draftData.reporter || '').trigger('change');
+                        }
+
+                        showAutoSaveNotification('Draft restored successfully');
+                    } else {
+                        localStorage.removeItem(DRAFT_KEY);
+                    }
+                });
+            }
         });
     </script>
 </body>

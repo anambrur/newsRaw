@@ -70,18 +70,18 @@ if (strlen($_SESSION['login']) == 0) {
             // $resizeObj->resizeImage(200, 114, 'exact');
             // $resizeObj->saveImage("images/thumb/" . $imgnewfile, 100);
 
-            $resizeObj = new resize("images/postimages/" . $imgnewfile);
+            $resizeObj = new ImageResize("images/postimages/" . $imgnewfile);
             if (!file_exists("images/postimages/" . $imgnewfile)) {
                 die("Original image not found at: images/postimages/" . $imgnewfile);
             }
 
-            $resizeObj->resizeImage(200, 114, 'exact');
+            $resizeObj->resize(200, 114, 'exact');
 
             $thumbPath = "images/thumb/" . $imgnewfile;
             if (!file_exists("images/thumb")) {
                 mkdir("images/thumb", 0755, true);
             }
-            $resizeObj->saveImage($thumbPath, 100);
+            $resizeObj->save($thumbPath, 100);
 
 
             if (!file_exists($thumbPath)) {
